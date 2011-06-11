@@ -1,0 +1,21 @@
+<simphony.settings.SettingsRegistry serialization="custom">
+  <unserializable-parents/>
+  <hashtable>
+    <default>
+      <loadFactor>0.75</loadFactor>
+      <threshold>8</threshold>
+    </default>
+    <int>3</int>
+    <int>5</int>
+    <string>SettingsFileName</string>
+    <string>Repast.settings</string>
+    <string>LastLoadedScenario</string>
+    <string>C:\Documents and Settings\sjalam-admin\workspace2\DrugModel\DrugModel.rs</string>
+    <string>SettingsRegistryId</string>
+    <string>Repast.registry</string>
+    <string>Pajek.home</string>
+    <string>C:\pajek\Pajek\</string>
+    <string>Pajek.licenseAccepted</string>
+    <boolean>true</boolean>
+  </hashtable>
+</simphony.settings.SettingsRegistry>

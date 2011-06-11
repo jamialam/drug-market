@@ -1,7 +1,10 @@
 package individual;
 
+import repast.simphony.engine.schedule.ScheduledMethod;
 import cern.jet.random.Uniform;
+import drugmodel.ContextCreator;
 import drugmodel.Settings;
+import drugmodel.Settings.SupplyOption;
 
 public class Customer extends Person {
 	/** Number of dealers known at the time of start or entry into the simulation.*/
@@ -33,12 +36,31 @@ public class Customer extends Person {
 	 *   Of course, they can only make this determination after they have bought the drug.
 	*/
 	public void buyDrugs() {
+		// (this.money )
 	}
+	
+	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 4)
+	public void income() {
+		double currentTick = ContextCreator.getTickCount();
+		if (Settings.Resupply.getSupplyOption().equals(SupplyOption.Automatic)) {
+			if (this.money <= 0.0) {
+				this.addMoney(Settings.Resupply.income(this.money));	
+			}	
+		}
+		else {
+			if (currentTick % Settings.CustomerParams.incomeInterval == 0) {
+				this.addMoney(Settings.Resupply.income(this.money));		
+			}
+		}
+	}	
 
+	@ScheduledMethod(start = 1, interval = 1, priority = 3)
 	public void useDrugs() {	
-	}
-
-	public void move() {		
+		double consumedDrug = Settings.consumptionStepsPerUnit;
+		deductDrug(consumedDrug);		
+		if (Settings.errorLog) {
+			System.out.println("Customer: " + personID + " consumes : " + consumedDrug + " now has: " + drugs);
+		}
 	}
 
 	public int getInitKnownDealers() {

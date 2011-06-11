@@ -1,5 +1,6 @@
 package drugmodel;
 
+
 import individual.Customer;
 import individual.Dealer;
 
@@ -12,7 +13,6 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 
-import drugmodel.Settings.Resupply;
 
 import repast.simphony.context.Context;
 import repast.simphony.context.space.gis.GeographyFactory;

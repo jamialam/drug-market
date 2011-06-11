@@ -5,20 +5,20 @@ import drugmodel.Settings.Endorsement;
 public class Transaction {
 	private Integer time;
 	private Double drugCost;
-	private Double drugQty;
+	private Double drugQtyInUnits;
 	private Endorsement endorsement;	
 
 	public Transaction() {
 		time = -1;
 		drugCost = 0d;
-		drugQty = 0d;
+		drugQtyInUnits = 0d;
 		endorsement = Endorsement.None;
 	}
 	
 	public Transaction(Integer _time, double _drugCost, double _drugQty, Endorsement _endorsement) {
 		time = _time;
 		drugCost = _drugCost;
-		drugQty = _drugQty;
+		drugQtyInUnits = _drugQty;
 		endorsement = _endorsement;
 	}
 
@@ -38,12 +38,12 @@ public class Transaction {
 		this.drugCost = drugCost;
 	}
 
-	public Double getDrugQty() {
-		return drugQty;
+	public Double getDrugQtyInUnits() {
+		return drugQtyInUnits;
 	}
 
-	public void setDrugQty(Double drugQty) {
-		this.drugQty = drugQty;
+	public void setDrugQtyInUnits(Double drugQty) {
+		this.drugQtyInUnits = drugQty;
 	}
 
 	public Endorsement getEndorsement() {

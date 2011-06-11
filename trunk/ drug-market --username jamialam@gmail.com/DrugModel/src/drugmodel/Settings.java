@@ -13,7 +13,7 @@ public class Settings {
 	public static double endTime = 1000.0;
 	public static int minDealerCustomerlinks = 1;
 	public static int maxDealerCustomerlinks = 3;
-	
+
 	//12 Units = 1 gram
 	public static final double unitsPerGram = 12;	
 	//In Minutes - Each time step is 10 minutes
@@ -22,8 +22,8 @@ public class Settings {
 	public static final double hoursInDay = 8;
 	//Number of steps in One day
 	public static final double stepsInDay = (hoursInDay*60)/step;
-//	//in minutes
-//	public static final double consumptionTimePerGram = 8*60;
+	//	//in minutes
+	//	public static final double consumptionTimePerGram = 8*60;
 	public static final double consumptionStepsPerUnit = stepsInDay/unitsPerGram;
 	/** Initial period. In time steps (days) */	
 	public static double initialPhase = 30*stepsInDay;
@@ -31,24 +31,34 @@ public class Settings {
 	public static double price_per_grams = 120;
 	/** Initially, the units sold per grams is kept same and later varied depending upon the sales. */
 	public static double units_per_grams = 12; 
-	
+
+	public static enum SupplyOption {Automatic, RegularConstant, RegularSurplus};
+
 	public static class DealersParams {
+		public static final int DealerRessuplyIntervalInDays = 21;
+		/** Resupply interval*/
+		public static final int resupplyInterval = (int)(DealersParams.DealerRessuplyIntervalInDays * stepsInDay);
 		public static final double TimeToLeaveMarketInDays = 7d;
 		//This is the one read by the Dealer
 		public static final double TimeToLeaveMarket = TimeToLeaveMarketInDays * stepsInDay;
 	}
 
+	public static class CustomerParams {
+		public static int CustomerIncomeIntervalInDays = 21;
+		public static final int incomeInterval = (int)(CustomerIncomeIntervalInDays * stepsInDay);
+	}
+
 	/** Endorsements */
 	public static enum Endorsement {None, Bad, Good};
 
-	public static enum SupplyOption {Automatic, RegularConstant, RegularSurplus};
 	public static class Resupply {
 		private static SupplyOption supplyOption = SupplyOption.RegularConstant;
-		/** Resupply interval*/
-		public static final int resupplyInterval = (int)(21 * stepsInDay);
+		private static SupplyOption incomeOption = SupplyOption.RegularConstant;
 		/** 12 grams */		
 		public static double constantDrugsGrams = 12;
 		public static double constantDrugsUnits = constantDrugsGrams * 12;
+		/** In Dollars */
+		public static double constantMoney = 120;
 
 		public void setSupplyOption(SupplyOption _supplyOption) {
 			supplyOption = _supplyOption;
@@ -56,6 +66,30 @@ public class Settings {
 		public static SupplyOption getSupplyOption() {
 			return supplyOption;
 		}
+		public void setIncomeOption(SupplyOption _incomeOption) {
+			incomeOption = _incomeOption;
+		}
+		public static SupplyOption getIncomeOption() {
+			return incomeOption;
+		}
+
+		public static double income(double currentMoney) {
+			double amountInDollars = 0;
+			switch(supplyOption) {
+			case Automatic: 
+				amountInDollars = constantMoney;
+				break;
+			case RegularConstant:
+				amountInDollars = constantMoney - currentMoney;
+				break;
+			case RegularSurplus:
+				amountInDollars = constantMoney;
+				break;
+			default: break;
+			}
+			return amountInDollars;			
+		}
+
 		public static double resupplyDrugs(double currentDrugs) {
 			double amountInUnits = 0;
 			switch(supplyOption) {

@@ -49,6 +49,10 @@ public class Person extends Object {
 		}		
 	}
 	
+	/* Currently, all agents are fixed. This will be implemented later on. */
+	public void move() {		
+	}
+		
 	public int getPersonID() {
 		return personID;
 	}

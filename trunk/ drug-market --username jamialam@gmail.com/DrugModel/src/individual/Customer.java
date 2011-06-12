@@ -1,6 +1,11 @@
 package individual;
 
+import java.util.Iterator;
+
+import repast.simphony.context.Context;
 import repast.simphony.engine.schedule.ScheduledMethod;
+import repast.simphony.space.graph.Network;
+import repast.simphony.util.ContextUtils;
 import cern.jet.random.Uniform;
 import drugmodel.ContextCreator;
 import drugmodel.Settings;
@@ -62,11 +67,33 @@ public class Customer extends Person {
 			System.out.println("Customer: " + personID + " consumes : " + consumedDrug + " now has: " + drugs);
 		}
 	}
+	
+	//this is likely to be a temporary solution .. we first check on the dealer
+	//whose id is forwarded to us by the customer socal link ... 
+	//if that is not found ...
+	public Dealer getDealer(int dealerID) {
+		Context context = (Context)ContextUtils.getContext(this);
+		Network transactionNetwork = (Network)(context.getProjection("transactionnetwork"));
+		Iterator itr = transactionNetwork.getAdjacent(this).iterator();
+		Dealer dealer = null;
+		while (itr.hasNext()) {
+			dealer = (Dealer) itr.next();
+			if (dealer.getPersonID() == dealerID) {
+				break;
+			}
+		}
+		return dealer;
+	}
+	
+	public void getBestDealer() {
+		
+	}
+
 
 	public int getInitKnownDealers() {
 		return initKnownDealers;
 	}
-
+	
 	public void setInitKnownDealers(int numInitialDealers) {
 		this.initKnownDealers = numInitialDealers;
 	}	

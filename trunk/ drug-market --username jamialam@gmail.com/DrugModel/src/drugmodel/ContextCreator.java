@@ -27,12 +27,13 @@ import repast.simphony.space.gis.GeographyParameters;
 import repast.simphony.space.graph.Network;
 
 public class ContextCreator implements ContextBuilder<Object> {
-	
 	private static double currentTick = -1;
+	public static Context<Object >mainContext;
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Context build(Context<Object> context) {
 		context.setId("drugmodel");
+		ContextCreator.mainContext = context;
 		
 		GeographyParameters<Object> geoparams = new GeographyParameters<Object>();
 		GeographyFactory factory = GeographyFactoryFinder.createGeographyFactory(null);
@@ -81,26 +82,6 @@ public class ContextCreator implements ContextBuilder<Object> {
 		ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
 		ScheduleParameters params = ScheduleParameters.createRepeating(1,1,1);
 		schedule.schedule(params, this, "updateCurrentTick");
-
-		/*		ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
-		ScheduleParameters params = ScheduleParameters.createOneTime(1,4);
-		schedule.schedule(params, this, "createIssue");
-
-		ISchedule schedule1 = RunEnvironment.getInstance().getCurrentSchedule();
-		ScheduleParameters params1 = ScheduleParameters.createRepeating(1,1,3);
-		schedule1.schedule(params1, this, "meetPeople");
-
-		ISchedule schedule2 = RunEnvironment.getInstance().getCurrentSchedule();
-		ScheduleParameters params2 = ScheduleParameters.createRepeating(1,7,4);
-		schedule2.schedule(params2, this, "turnOver");*/
-
-		/*	ISchedule schedule3 = RunEnvironment.getInstance().getCurrentSchedule();
-		ScheduleParameters params3 = ScheduleParameters.createRepeating(1,100,1);
-		schedule2.schedule(params3, this, "garbageclean");*/
-		/*		ISchedule schedule3 = RunEnvironment.getInstance().getCurrentSchedule();
-		ScheduleParameters params6 = ScheduleParameters.createAtEnd(1);
-		schedule3.schedule(params6, this, "writePajek");		
-		 */
 		
 		// If running in batch mode, schedule the simulation to stop time
 		if(RunEnvironment.getInstance().isBatch()){
@@ -109,6 +90,23 @@ public class ContextCreator implements ContextBuilder<Object> {
 		return context;
 	}
 	
+	public Dealer getDealer(int dealerID) {
+		Iterator itr = mainContext.getObjects(Dealer.class).iterator();
+		Dealer dealer = null;
+		while (itr.hasNext()) {
+			dealer = (Dealer) itr.next();
+			if (dealer.getPersonID() == dealerID) {
+				break;
+			}
+		}
+		if (Settings.errorLog) {
+			if (dealer == null) {
+				System.err.println("Dealer null. Dealer ID called: " + dealerID); 
+			}
+		}
+		return dealer;
+	}
+
 	public void updateTickCount() {
 		currentTick = RunEnvironment.getInstance().getCurrentSchedule().getTickCount();
 	}
@@ -116,5 +114,4 @@ public class ContextCreator implements ContextBuilder<Object> {
 	public static double getTickCount() {
 		return currentTick;
 	}
-
 }

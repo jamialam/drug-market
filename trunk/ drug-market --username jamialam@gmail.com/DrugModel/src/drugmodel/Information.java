@@ -1,6 +1,5 @@
 package drugmodel;
 
-import individual.Dealer;
 import drugmodel.Settings.Endorsement;
 
 /* We don't need to store the drug dealer's reference on the TransactionEdge ... only the ID.

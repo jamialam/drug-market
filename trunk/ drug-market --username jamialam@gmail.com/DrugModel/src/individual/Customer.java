@@ -88,16 +88,28 @@ public class Customer extends Person {
 				System.err.println("Dealer is null or not found. In buyDrugs(). Me: " + personID);
 			}
 		}		 
+		
 		int currentTick = (int) ContextCreator.getTickCount();
 		double quantity = dealer.returnDrugInUnits();
-		//This is calculated implicitly.
-		double cost = quantity * Settings.price_per_gram;
-		
+		double cost = quantity * Settings.price_per_gram;		
 		Endorsement endorsement = Endorsement.None;
+		
+		//Sale Deed
+		dealer.sellDrug(quantity);
+		addDrug(quantity);
+		deductMoney(cost);
+
+		////to check...
 		if (deal != null) {
 			endorsement = cost <= deal.getDrugCost() ? Endorsement.Good : Endorsement.Bad;
+			if (deal.getCustomerID() != this.personID) {
+				updateEndorsement(deal.getCustomerID(), endorsement);
+			}
 		}
-
+		else if (lastTransaction != null) {
+			endorsement = cost <= lastTransaction.getDrugCost() ? Endorsement.Good : Endorsement.Bad;
+		}
+		
 		Transaction transaction = new Transaction(dealer.getPersonID(), personID, currentTick, cost, quantity, endorsement);
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
 		TransEdge edge;
@@ -109,13 +121,34 @@ public class Customer extends Person {
 			edge = (TransEdge) transactionNetwork.getEdge(this, dealer);	
 		}		
 		edge.addTransaction(transaction);
-		this.lastTransaction = transaction;
-		
+		this.lastTransaction = transaction;		
 		//Now pay tax or commission
 		if (deal != null) {
 			if (deal.getCustomerID() != this.personID) {
 				Customer connection = (Customer) returnMyConnection(deal.getCustomerID(), Settings.socialnetwork);
 				payTax(connection);
+			}
+		}
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void updateEndorsement(int connectionID, Endorsement endorsement) {
+		boolean updated = false;
+		Network socialNetwork = (Network)(context.getProjection(Settings.socialnetwork));
+		Iterator itr = socialNetwork.getAdjacent(this).iterator();
+		while (itr.hasNext()) {
+			Customer customer = (Customer) itr.next();
+			if (customer.getPersonID() == connectionID) {
+				SNEdge outEdge = (SNEdge) socialNetwork.getEdge(this, customer);
+				double currentTick = ContextCreator.getTickCount();
+				outEdge.addEndorsement(endorsement, currentTick);
+				updated = true;
+				break;
+			}
+		}		
+		if (updated == false) {
+			if (Settings.errorLog) {
+				System.err.println("Customer is null. In update Endorsement. I am: " + personID + " updating endorsement of: " + connectionID);
 			}
 		}
 	}

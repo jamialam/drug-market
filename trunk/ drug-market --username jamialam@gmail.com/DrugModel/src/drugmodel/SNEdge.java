@@ -30,6 +30,10 @@ public class SNEdge<T> extends RepastEdge {
 		}
 	}
 	
+	public void addEndorsement(Endorsement endorsement, double time) {
+		endorsements.get(endorsement).add(time);
+	}
+	
 	public void addTransaction(Transaction transaction) {
 		if (transactionList.contains(transaction) == false) {
 			transactionList.add(transaction);

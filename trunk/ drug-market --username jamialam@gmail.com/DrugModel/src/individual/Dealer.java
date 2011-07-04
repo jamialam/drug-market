@@ -1,6 +1,8 @@
 package individual;
 
-
+/**
+ * @author shah
+ */
 import java.util.Iterator;
 
 import drugmodel.ContextCreator;
@@ -14,17 +16,20 @@ import repast.simphony.space.graph.Network;
 import repast.simphony.util.ContextUtils;
 
 public class Dealer extends Person {
+	private double priceInUnits;
 	private double timeToLeaveMarket;
 	private double lastTimeZeroDrug;
 	
 	public Dealer() {
 		setDrugs(Settings.Resupply.constantDrugsUnits);
+		priceInUnits = (Settings.price_per_gram/Settings.units_per_gram);
 		timeToLeaveMarket = Settings.DealersParams.TimeToLeaveMarket;
 		lastTimeZeroDrug = -1;
 	}
 	
-	//We want to make this a watcher query
-	public void sellDrugs(){		
+	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 3)
+	public void updatePrice(){
+		
 	}
 	
 	public double returnDrugInUnits(){
@@ -32,16 +37,14 @@ public class Dealer extends Person {
 			return Settings.units_per_gram;
 		}
 		else {
-			return 0;
+			double units = (Settings.price_per_gram/priceInUnits);
+			return units;
 		}
 	}
-
-	public void changeOffer(){
-		// if sell is down increase units_per_grams else do inverse
-		/*	Dealers will then change their offers based on the amount of sales they are making. After establishing a mean number of sales, standard deviations can signal to a dealer agent when make changes, e.g, “low” sales = -1 standard deviation in the number of sales; “high” sales = + 1 standard deviation. At these points the dealer will unilaterally change their deal. 
-
-	Dealers will change their deals by offering more or less drug (changing the units they sell). Price will remain the same ($120). If sales are down, they want to attract more customers and will offer better deals, i.e., instead of selling 12 units for $120 (10) they change to selling 12+1 units for $120 (9.23). If sales are up, they will reduce their deals, i.e., instead of selling 12 units for $120 (10), they sell 12-1 units for $120 (10.9). 
-		 */
+	
+	public void sellDrug(double quantity) {
+		deductDrug(quantity);
+		addMoney(Settings.price_per_gram);
 	}
 
 	/** 
@@ -136,5 +139,12 @@ public class Dealer extends Person {
 	public void setLastTimeZeroDrug(double lastTimeZeroDrug) {
 		this.lastTimeZeroDrug = lastTimeZeroDrug;
 	}
-	
+
+	public double getPriceInUnits() {
+		return priceInUnits;
+	}
+
+	public void setPriceInUnits(double priceInUnits) {
+		this.priceInUnits = priceInUnits;
+	}
 }

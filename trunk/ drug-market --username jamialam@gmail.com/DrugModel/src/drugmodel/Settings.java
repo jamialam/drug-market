@@ -1,5 +1,9 @@
 package drugmodel;
 
+/**
+ * @author shah
+ */
+
 import cern.jet.random.Normal;
 
 public class Settings {
@@ -50,6 +54,11 @@ public class Settings {
 		public static final int incomeInterval = (int)(CustomerIncomeIntervalInDays * stepsInDay);
 		//magic number
 		public static final double shareDealProb = 0.35;
+		public static final int defaultBadAllowed = 11;
+		
+		public static int returnBadAllowed() {
+			return defaultBadAllowed;
+		}
 	}
 
 	/** Endorsements */

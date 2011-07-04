@@ -1,5 +1,8 @@
 package generator;
 
+/**
+ * @author shah
+ */
 
 import individual.Person;
 
@@ -59,6 +62,7 @@ public class Generator extends Settings {
 		return network;
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static Network returnBarabasiAlbertNetwork(Context context) {
 		double propInitialVertices = 0.01;
 		int initVertices = (int)(Settings.initCustomers*propInitialVertices);
@@ -70,6 +74,7 @@ public class Generator extends Settings {
 		return acquaintanceNetwork;
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static Network returnKlienbergSmallWorldNetwork(Context context) {
 		int latticeSize = (int)(Math.ceil(Math.sqrt((double)Settings.initCustomers)));
 		ContextJungNetwork acquaintanceNetwork = (ContextJungNetwork)NetworkFactoryFinder.createNetworkFactory(null).createNetwork(name, context, directed, new SNEdgeCreator());
@@ -79,7 +84,7 @@ public class Generator extends Settings {
 		return acquaintanceNetwork;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static Network returnEppsteinPowerLaw(Context context) {
 //		long iterations = 100000;
 		long iterations = 1000;
@@ -91,6 +96,7 @@ public class Generator extends Settings {
 		return acquaintanceNetwork;
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static Network returnWattsStrogatzSW(Context context) {
 		NetworkGenerator gen = new WattsBetaSmallWorldGenerator (rewireProb, degree, symmetrical);	
 		NetworkBuilder builder = new NetworkBuilder(SocialNetworkParam.NAME, context, directed);
@@ -100,7 +106,7 @@ public class Generator extends Settings {
 		return acquaintanceNetwork;
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static Network returnErdosRenyiRandom(Context context) {
 		double n = (double)(Settings.initCustomers);
 		double edges = (Settings.initCustomers*degree)/2;

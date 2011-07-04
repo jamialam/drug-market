@@ -41,7 +41,7 @@ public class EppsteinPowerLawGen<V,E> implements GraphGenerator<V,E> {
 	private double mMaxDegree;
 	private Random mRandom;
 	private boolean directed;
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "rawtypes" })
 	private Context context;
 	
 	/**
@@ -54,7 +54,7 @@ public class EppsteinPowerLawGen<V,E> implements GraphGenerator<V,E> {
 	 * @param r the number of iterations to use; the larger the value the better the graph's degree
 	 * distribution will approximate a power-law
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "rawtypes" })
 	public EppsteinPowerLawGen(Context _context, int numVertices, int numEdges, long r, boolean isDirected) {
 		this.context = _context;
 		this.mNumVertices = numVertices;
@@ -64,7 +64,7 @@ public class EppsteinPowerLawGen<V,E> implements GraphGenerator<V,E> {
 		this.directed = isDirected;;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected Graph<Person,SNEdge<Person>> initializeGraph() {
 		Graph<Person,SNEdge<Person>> graph = null;
 		graph = new DirectedSparseGraph<Person, SNEdge<Person>>();
@@ -97,7 +97,7 @@ public class EppsteinPowerLawGen<V,E> implements GraphGenerator<V,E> {
 	 * Generates a graph whose degree distribution approximates a power-law.
 	 * @return the generated graph
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public Graph create() {
 		Graph<Person,SNEdge<Person>> graph = initializeGraph();
 		List<Person> vertices = new ArrayList<Person>(graph.getVertices());

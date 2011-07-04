@@ -39,18 +39,9 @@ public class KleinbergSmallWorldGen<V, E> extends Lattice2DGen<V, E> {
     private double clustering_exponent;
     private Random random;
     private int num_connections = 1;
-    @SuppressWarnings("unchecked")
     
-    /**
-     * Creates 
-     * @param graph_factory
-     * @param vertex_factory
-     * @param edge_factory
-     * @param latticeSize
-     * @param clusteringExponent
-     */
-	public KleinbergSmallWorldGen(Context _context, int latticeSize, double clusteringExponent, boolean isDirected) 
-    {
+    @SuppressWarnings("rawtypes")
+	public KleinbergSmallWorldGen(Context _context, int latticeSize, double clusteringExponent, boolean isDirected) {
         this(_context, latticeSize, latticeSize, clusteringExponent, isDirected);
     }
 
@@ -62,7 +53,7 @@ public class KleinbergSmallWorldGen<V, E> extends Lattice2DGen<V, E> {
      * @param col_count
      * @param clusteringExponent
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "rawtypes" })
 	public KleinbergSmallWorldGen(Context _context, int row_count, int col_count, double clusteringExponent, boolean isDirected) {
     	super(_context, row_count, col_count, true, isDirected);
         clustering_exponent = clusteringExponent;
@@ -130,10 +121,8 @@ public class KleinbergSmallWorldGen<V, E> extends Lattice2DGen<V, E> {
      * Generates a random small world network according to the parameters given
      * @return a random small world graph
      */
-    @SuppressWarnings("unchecked")
-	@Override
-    public Graph create() 
-    {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+	public Graph create() {
         Graph graph = super.create();        
         // TODO: For toroidal graphs, we can make this more clever by pre-creating the WeightedChoice object
         // and using the output as an offset to the current vertex location.

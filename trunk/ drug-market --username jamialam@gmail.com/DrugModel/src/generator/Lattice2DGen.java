@@ -46,7 +46,7 @@ public class Lattice2DGen<V, E> implements GraphGenerator<V, E> {
 	protected boolean is_toroidal;
 	protected boolean is_directed;
 	private List<Person> v_array;
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	private Context context;
 
 
@@ -60,7 +60,7 @@ public class Lattice2DGen<V, E> implements GraphGenerator<V, E> {
 	 * @param latticeSize the number of rows and columns of the lattice
 	 * @param isToroidal if true, the created lattice wraps from top to bottom and left to right
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public Lattice2DGen(Context _context, int latticeSize, boolean isToroidal, boolean isDirected) {
 		this(_context, latticeSize, latticeSize, isToroidal, isDirected);
 	}
@@ -76,7 +76,7 @@ public class Lattice2DGen<V, E> implements GraphGenerator<V, E> {
 	 * @param col_count the number of columns in the lattice
 	 * @param isToroidal if true, the created lattice wraps from top to bottom and left to right
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public Lattice2DGen(Context _context, int row_count, int col_count, boolean isToroidal, boolean isDirected)
 	{
 		if (row_count < 2 || col_count < 2)
@@ -93,7 +93,7 @@ public class Lattice2DGen<V, E> implements GraphGenerator<V, E> {
 	/**
 	 * @see edu.uci.ics.jung.algorithms.generators.GraphGenerator#create()
 	 */
-	@SuppressWarnings({ "unchecked"})
+	@SuppressWarnings({ "unchecked", "rawtypes"})
 	public Graph create()
 	{
 		int vertex_count = row_count * col_count;

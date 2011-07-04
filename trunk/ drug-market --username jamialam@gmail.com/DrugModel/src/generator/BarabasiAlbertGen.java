@@ -91,7 +91,7 @@ public class BarabasiAlbertGen<V,E> implements EvolvingGraphGenerator<V,E> {
 	protected Map<Person, Integer> index_my_vertex;
 
 	private boolean directed = false;
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	private Context context;
 	private ArrayList<Person> persons;
 
@@ -102,7 +102,7 @@ public class BarabasiAlbertGen<V,E> implements EvolvingGraphGenerator<V,E> {
 	 * @param numEdgesToAttach the number of edges that should be attached from the
 	 * new vertex to pre-existing vertices at each time step
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public BarabasiAlbertGen(Context _context, int init_vertices, HashSet<Person> seedVertices, int numEdgesToAttach, boolean _directed) {
 		assert init_vertices > 0 : "Number of initial unconnected 'seed' vertices " + 
 		"must be positive";
@@ -119,7 +119,7 @@ public class BarabasiAlbertGen<V,E> implements EvolvingGraphGenerator<V,E> {
 		initialize(seedVertices);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void initialize(HashSet seedVertices) {
 		vertex_list = new ArrayList<Person>(2*init_vertices);
 		index_my_vertex = new HashMap<Person, Integer>(2*init_vertices);
@@ -219,7 +219,7 @@ public class BarabasiAlbertGen<V,E> implements EvolvingGraphGenerator<V,E> {
 		return mElapsedTimeSteps;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public Graph create() {
 		return myGraph;
 	}

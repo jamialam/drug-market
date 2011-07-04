@@ -1,6 +1,8 @@
 package individual;
 
-
+/** 
+ * @author shah
+ */
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -25,26 +27,30 @@ public class Customer extends Person {
 	/** Number of dealers known at the time of start or entry into the simulation.*/
 	private int initKnownDealers; 
 	private double initialBudget;
+	@SuppressWarnings("rawtypes")
 	private Context context;
 	private Transaction lastTransaction;
-	private double tax; 
+	private double tax;
+	private int numBadAllowed;
 
+	@SuppressWarnings("rawtypes")
 	public Customer() {
-		initKnownDealers = Uniform.staticNextIntFromTo(Settings.minDealerCustomerlinks, Settings.maxDealerCustomerlinks);
-		initializeInventory();
-		context = (Context)ContextUtils.getContext(this);
-		lastTransaction = null;
-	}	
-
-	private void initializeInventory() {
+		this.context = (Context)ContextUtils.getContext(this);
+		initialize();
+	}
+	
+	private void initialize() {
+		this.initKnownDealers = Uniform.staticNextIntFromTo(Settings.minDealerCustomerlinks, Settings.maxDealerCustomerlinks);
 		this.initialBudget = Settings.Budget.returnInitialBudget();
 		addMoney(initialBudget);
 		if (Settings.Tax.taxType.equals(TaxType.FlatFee)) {
-			tax = Settings.Tax.returnTaxCost();
+			this.tax = Settings.Tax.returnTaxCost();
 		}
 		else {
-			tax = Settings.Tax.returnDrugInUnits();
+			this.tax = Settings.Tax.returnDrugInUnits();
 		}
+		this.numBadAllowed = Settings.CustomerParams.returnBadAllowed();
+		this.lastTransaction = null;
 	}
 
 	/**
@@ -55,6 +61,8 @@ public class Customer extends Person {
 	 *   i.e., they evaluate the units sold at the lowest price, i.e., the lowest number from above.
 	 *   Of course, they can only make this determination after they have bought the drug.
 	 */
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 3)
 	public void buyDrugs() {
 		Transaction deal;
@@ -149,6 +157,38 @@ public class Customer extends Person {
 		}
 	}
 
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 2)
+	public void evaluateConnections() {
+		Network socialNetwork = (Network)(context.getProjection(Settings.socialnetwork));
+		Iterator itr = socialNetwork.getOutEdges(this).iterator();
+		ArrayList<SNEdge> removedLinks = new ArrayList<SNEdge>();
+		while (itr.hasNext()) {
+			SNEdge edge = (SNEdge) itr.next();
+			if (shouldDropLink(edge)) {
+				//Remove network link with other customer
+				Customer customer = (Customer) edge.getTarget();
+				removedLinks.add((SNEdge)socialNetwork.getEdge(this, customer));
+				removedLinks.add((SNEdge)socialNetwork.getEdge(customer, this));
+			}
+		}
+		for (SNEdge edge : removedLinks) {
+			socialNetwork.removeEdge(edge);
+		}
+	}
+	
+	@SuppressWarnings("rawtypes")
+	private boolean shouldDropLink(SNEdge edge) {
+		int numBadEndorsements = edge.returnNumBadEndorsements();
+		if (numBadEndorsements >= this.numBadAllowed) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	
 	/**
 	 * In this method we also pay tax to the one who had sent a 'good deal' that we used.  
 	 * 
@@ -158,6 +198,7 @@ public class Customer extends Person {
 	 * after a day, and then if in the next day, any customer needs to purchase a drug, they have an up to date 
 	 * information ...
 	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 1)
 	public void shareDeals() {
 		int currentTick = (int) ContextCreator.getTickCount();
@@ -195,6 +236,7 @@ public class Customer extends Person {
 		return dealer;
 	}	*/
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private Person returnMyConnection(int connectionID, String networkName) {
 		Network network;
 		if (networkName == Settings.socialnetwork) {
@@ -226,24 +268,25 @@ public class Customer extends Person {
 		return connection; 
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected Transaction returnBestDealsFromNetwork() {
-		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
-		Iterator itr = transactionNetwork.getEdges().iterator();
-		double bestValue = Double.MAX_VALUE;		
 		Transaction bestDeal = null;
+		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
+		Iterator itr = transactionNetwork.getAdjacent(this).iterator();		
 		ArrayList<Transaction> deals = new ArrayList<Transaction>();
 		while (itr.hasNext()) { 
-			TransEdge transEdge = (TransEdge) itr.next();
+			Dealer dealer = (Dealer) itr.next();
+			TransEdge transEdge = (TransEdge) transactionNetwork.getEdge(this, dealer);
 			if (transEdge.getLastTransactionIndex() != -1) {
 				deals.add(transEdge.getLastTransaction());
 			}
 		}
 		Network socialNetwork = (Network) (context.getProjection(Settings.socialnetwork));
-		itr = socialNetwork.getEdges().iterator();
+		itr = socialNetwork.getInEdges(this).iterator();
 		while (itr.hasNext()) {
 			SNEdge snEdge = (SNEdge) itr.next();
-			if (snEdge.getLastTransactionIndex() != -1) {
-				deals.add(snEdge.getLastTransaction());
+			if (snEdge.returnLastTransactionIndex() != -1) {
+				deals.add(snEdge.returnLastTransaction());
 			}
 		}		
 		if (deals.isEmpty()) {
@@ -260,19 +303,21 @@ public class Customer extends Person {
 					return trans1.getTime() < trans2.getTime() ? +1 : (trans1.getTime() == trans2.getTime()) ? 0 : -1;
 				}
 			}
-		});
-		
-		return deals.get(0);
+		});		
+
+		bestDeal = deals.get(0);
+		return bestDeal;
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected Transaction returnMyBestDeal() {
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
-		Iterator itr = transactionNetwork.getEdges().iterator();
-		double bestValue = Double.MAX_VALUE;		
+		Iterator itr = transactionNetwork.getAdjacent(this).iterator();		
 		Transaction bestDeal = null;
 		ArrayList<Transaction> deals = new ArrayList<Transaction>();
 		while (itr.hasNext()) { 
-			TransEdge transEdge = (TransEdge) itr.next();
+			Dealer dealer = (Dealer) itr.next();
+			TransEdge transEdge = (TransEdge) transactionNetwork.getEdge(this, dealer);
 			if (transEdge.getLastTransactionIndex() != -1) {
 				deals.add(transEdge.getLastTransaction());
 			}
@@ -291,6 +336,7 @@ public class Customer extends Person {
 	}	
 
 	/** Returns a random dealer from my assigned dealers. */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected Dealer returnRandomDealer() {
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
 		Dealer dealer = (Dealer) transactionNetwork.getRandomAdjacent(this);
@@ -301,26 +347,6 @@ public class Customer extends Person {
 		}		
 		return dealer;
 	}
-
-	/*	private Dealer getBestDealer() {
-		Transaction bestDeal = (Transaction) getBestDeal();
-		Dealer bestDealer = null;
-		if (bestDeal != null) {
-			bestDealer = (Dealer) getDealer(bestDeal.getDealerID());
-		}
-		else {
-			bestDealer = (Dealer) ((Network) context.getProjection(Settings.transactionnetwork)).getRandomAdjacent(this);			
-		}
-		if (Settings.errorLog) {
-			if (bestDeal == null) {
-				System.err.println("Best Deal not found. In getBestDealer(). ");
-			}
-			if (bestDealer == null) {
-				System.err.println("Best Dealer not found. In getBestDealer(). ");
-			}
-		}		
-		return bestDealer;
-	}*/
 
 	public int getInitKnownDealers() {
 		return initKnownDealers;

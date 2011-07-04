@@ -1,13 +1,16 @@
 package drugmodel;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
+
+import drugmodel.Settings.Endorsement;
 
 import repast.simphony.space.graph.RepastEdge;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public class SNEdge<T> extends RepastEdge {
-	//private EdgeDataMap<Integer, Transaction> TransactionData;	
+public class SNEdge<T> extends RepastEdge {	
 	private ArrayList<Transaction> transactionList;
+	private EnumMap<Endorsement, ArrayList<Double>> endorsements;
 	
 	public SNEdge(Object source, Object target, boolean directed, double weight) {
 		super(source, target, directed, weight);
@@ -21,7 +24,10 @@ public class SNEdge<T> extends RepastEdge {
 	
 	private void initialize() {
 		transactionList = new ArrayList<Transaction>();
-		//TransactionData = new EdgeDataMap<Integer, Transaction>();
+		endorsements = new EnumMap<Settings.Endorsement, ArrayList<Double>>(Endorsement.class);
+		for (Endorsement endorsement : Endorsement.values()) {
+			endorsements.put(endorsement, new ArrayList<Double>());
+		}
 	}
 	
 	public void addTransaction(Transaction transaction) {
@@ -30,7 +36,7 @@ public class SNEdge<T> extends RepastEdge {
 		}
 	}
 	
-	public int getLastTransactionIndex() {
+	public int returnLastTransactionIndex() {
 		if (transactionList.isEmpty()) {
 			return -1;
 		}
@@ -39,12 +45,20 @@ public class SNEdge<T> extends RepastEdge {
 		}
 	}
 
-	public Transaction getLastTransaction() {
+	public Transaction returnLastTransaction() {
 		return transactionList.get(transactionList.size()-1);
 	}
 	
-	public int getTotalTransactions() {
+	public int returnTotalTransactions() {
 		return transactionList.size();
+	}
+	 
+	public int returnNumGoodEndorsements() {
+		return endorsements.get(Endorsement.Good).size();
+	}
+	
+	public int returnNumBadEndorsements() {
+		return endorsements.get(Endorsement.Bad).size();
 	}
 		
 	public int getLastDealIndex() {
@@ -63,12 +77,4 @@ public class SNEdge<T> extends RepastEdge {
 	public void setTransactionList(ArrayList<Transaction> transactionData) {
 		this.transactionList = transactionData;
 	}
-	
-/*	public EdgeDataMap<Integer, Transaction> getTransactionData() {
-		return TransactionData;
-	}
-
-	public void setTransactionData(EdgeDataMap<Integer, Transaction> TransactionData) {
-		this.TransactionData = TransactionData;
-	}*/
 }

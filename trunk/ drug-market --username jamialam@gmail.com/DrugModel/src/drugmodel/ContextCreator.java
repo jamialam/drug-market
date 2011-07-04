@@ -1,5 +1,8 @@
 package drugmodel;
 
+/**
+ * @author shah
+ */
 
 import individual.Customer;
 import individual.Dealer;
@@ -29,12 +32,12 @@ import repast.simphony.space.graph.Network;
 public class ContextCreator implements ContextBuilder<Object> {
 	private static double currentTick = -1;
 	public static Context<Object >mainContext;
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Context build(Context<Object> context) {
 		context.setId("drugmodel");
 		ContextCreator.mainContext = context;
-		
+
 		GeographyParameters<Object> geoparams = new GeographyParameters<Object>();
 		GeographyFactory factory = GeographyFactoryFinder.createGeographyFactory(null);
 		Geography neighbourhood = factory.createGeography("city", context, geoparams);
@@ -49,6 +52,7 @@ public class ContextCreator implements ContextBuilder<Object> {
 			neighbourhood.move(customer, geom); 
 		}
 		//First embed all the customer agents in to a network. 
+		@SuppressWarnings("unused")
 		Network socialnetwork = Generator.returnNetwork(context, Settings.generator_type);
 
 		for (int i=0; i<Settings.initDealers; i++) {
@@ -59,7 +63,7 @@ public class ContextCreator implements ContextBuilder<Object> {
 			neighbourhood.move(dealer, geom);
 		}
 
-		 //Now generate the customer-dealer network - Unconnected. 
+		//Now generate the customer-dealer network - Unconnected and Undirected.  
 		Network transactionnetwork = NetworkFactoryFinder.createNetworkFactory(null).createNetwork(
 				Settings.transactionnetwork, context, false, new TransEdgeCreator());
 
@@ -77,20 +81,21 @@ public class ContextCreator implements ContextBuilder<Object> {
 				System.out.println("Customer: " + customer.getPersonID() + " has limit: " + customer.getInitKnownDealers()
 						+ " and has degree: " + transactionnetwork.getDegree(customer));
 			}
-				
+
 		}
 
 		ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
 		ScheduleParameters params = ScheduleParameters.createRepeating(1,1,1);
 		schedule.schedule(params, this, "updateCurrentTick");
-		
+
 		// If running in batch mode, schedule the simulation to stop time
 		if(RunEnvironment.getInstance().isBatch()){
 			RunEnvironment.getInstance().endAt(Settings.endTime);		
 		}				
 		return context;
 	}
-	
+
+	@SuppressWarnings("rawtypes")
 	public static Dealer getDealer(int dealerID) {
 		Iterator itr = mainContext.getObjects(Dealer.class).iterator();
 		Dealer dealer = null;
@@ -111,7 +116,7 @@ public class ContextCreator implements ContextBuilder<Object> {
 	public void updateTickCount() {
 		currentTick = RunEnvironment.getInstance().getCurrentSchedule().getTickCount();
 	}
-	
+
 	public static double getTickCount() {
 		return currentTick;
 	}

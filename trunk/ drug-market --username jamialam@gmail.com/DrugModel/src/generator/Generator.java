@@ -22,12 +22,12 @@ import repast.simphony.space.graph.Network;
 public class Generator extends Settings {
 	static final boolean selfLoops = false;
 	static boolean symmetrical = true;
-	static boolean directed = Settings.SocaialNetworkParam.DIRECTED;
-	static double clusteringCoefficient = Settings.SocaialNetworkParam.CLUSTERING_COEFFICIENT;
-	static int degree = Settings.SocaialNetworkParam.DEGREE;
-	static double rewireProb = SocaialNetworkParam.REWIRE_PROB;
-	static int edgesToAttach = Settings.SocaialNetworkParam.EDGES_TO_ATTACH;
-	static String name = Settings.SocaialNetworkParam.NAME;
+	static boolean directed = Settings.SocialNetworkParam.DIRECTED;
+	static double clusteringCoefficient = Settings.SocialNetworkParam.CLUSTERING_COEFFICIENT;
+	static int degree = Settings.SocialNetworkParam.DEGREE;
+	static double rewireProb = SocialNetworkParam.REWIRE_PROB;
+	static int edgesToAttach = Settings.SocialNetworkParam.EDGES_TO_ATTACH;
+	static String name = Settings.SocialNetworkParam.NAME;
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static Network returnNetwork(Context context, GeneratorType genType) {
@@ -93,7 +93,7 @@ public class Generator extends Settings {
 	
 	private static Network returnWattsStrogatzSW(Context context) {
 		NetworkGenerator gen = new WattsBetaSmallWorldGenerator (rewireProb, degree, symmetrical);	
-		NetworkBuilder builder = new NetworkBuilder(SocaialNetworkParam.NAME, context, directed);
+		NetworkBuilder builder = new NetworkBuilder(SocialNetworkParam.NAME, context, directed);
 		builder.setEdgeCreator(new SNEdgeCreator());
 		builder.setGenerator(gen);
 		Network acquaintanceNetwork = builder.buildNetwork();		
@@ -107,7 +107,7 @@ public class Generator extends Settings {
 		double allpos = (n*(n-1))/2;
 		double density = edges/allpos;
 		NetworkGenerator gen = new RandomDensityGenerator(density, selfLoops, symmetrical);	
-		NetworkBuilder builder = new NetworkBuilder(SocaialNetworkParam.NAME, context, directed);
+		NetworkBuilder builder = new NetworkBuilder(SocialNetworkParam.NAME, context, directed);
 		builder.setEdgeCreator(new SNEdgeCreator());
 		builder.setGenerator(gen);
 		Network acquaintanceNetwork = builder.buildNetwork();		

@@ -28,13 +28,15 @@ public class Settings {
 	/** Initial period. In time steps (days) */	
 	public static double initialPhase = 30*stepsInDay;
 	/** We assume this to remain constant for now. */
-	public static double price_per_grams = 120;
+	public static double price_per_gram = 120;
 	/** Initially, the units sold per grams is kept same and later varied depending upon the sales. */
-	public static double units_per_grams = 12; 
+	public static double units_per_gram = 12; 
 
 	public static enum SupplyOption {Automatic, RegularConstant, RegularSurplus};
+	public static enum DealerSelection {Random, MyBest, NetworkBest};
 
 	public static class DealersParams {
+		public static DealerSelection dealerSelection = DealerSelection.Random;  
 		public static final int DealerRessuplyIntervalInDays = 21;
 		/** Resupply interval*/
 		public static final int resupplyInterval = (int)(DealersParams.DealerRessuplyIntervalInDays * stepsInDay);
@@ -46,10 +48,33 @@ public class Settings {
 	public static class CustomerParams {
 		public static int CustomerIncomeIntervalInDays = 21;
 		public static final int incomeInterval = (int)(CustomerIncomeIntervalInDays * stepsInDay);
+		//magic number
+		public static final double shareDealProb = 0.35;
 	}
 
 	/** Endorsements */
 	public static enum Endorsement {None, Bad, Good};
+	public static enum TaxType {FlatFee, AmountDrug};
+	
+	public static class Tax {
+		public static TaxType taxType = TaxType.FlatFee;
+		//1/2 unit price
+		public static double flatFee = (double) 0.5 * (price_per_gram/units_per_gram);
+		//1/2 unit
+		public static double amountDrugInUnits = 1.0; 		
+		public static double returnTaxCost() {
+			if (taxType.equals(TaxType.FlatFee)) {
+				return flatFee;
+			}
+			else {
+				return ((double) amountDrugInUnits * (price_per_gram/units_per_gram));
+			}
+		}
+		
+		public static double returnDrugInUnits() {
+			return amountDrugInUnits;
+		}
+	}
 
 	public static class Resupply {
 		private static SupplyOption supplyOption = SupplyOption.RegularConstant;
@@ -111,7 +136,7 @@ public class Settings {
 	public static enum GeneratorType{Unconnected, BarabasiAlbert, KleinbergSmallWorld, 
 		WattsSmallWorld, ErdosRenyiRandom, EppsteinPowerLaw};
 		public static GeneratorType generator_type = GeneratorType.WattsSmallWorld;
-		public static class SocaialNetworkParam {
+		public static class SocialNetworkParam {
 			public static boolean DIRECTED = true;
 			public static String NAME = "socialnetwork";			
 			/** Average social networks degree. */

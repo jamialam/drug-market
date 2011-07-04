@@ -27,9 +27,9 @@ public class Dealer extends Person {
 	public void sellDrugs(){		
 	}
 	
-	public double getDeal(){
+	public double returnDrugInUnits(){
 		if (ContextCreator.getTickCount() <= Settings.initialPhase) {
-			return Settings.units_per_grams;
+			return Settings.units_per_gram;
 		}
 		else {
 			return 0;

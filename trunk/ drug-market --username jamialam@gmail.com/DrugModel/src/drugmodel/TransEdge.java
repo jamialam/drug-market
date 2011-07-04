@@ -29,6 +29,29 @@ public class TransEdge<T> extends RepastEdge{
 		initialize();
 	}
 	
+	public void addTransaction(Transaction transaction) {
+		if (transactionList.contains(transaction) == false) {
+			transactionList.add(transaction);
+		}
+	}
+	
+	public int getLastTransactionIndex() {
+		if (transactionList.isEmpty()) {
+			return -1;
+		}
+		else {
+			return (transactionList.size()-1);
+		}
+	}
+
+	public Transaction getLastTransaction() {
+		return transactionList.get(transactionList.size()-1);
+	}
+	
+	public int getTotalTransactions() {
+		return transactionList.size();
+	}
+	
 	private void initialize() {
 		transactionList = new ArrayList<Transaction>();
 		//transactionData = new EdgeDataMap<Integer, Transaction>();

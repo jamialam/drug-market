@@ -3,6 +3,7 @@ package individual;
 /**
  * @author shah
  */
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import drugmodel.ContextCreator;
@@ -29,7 +30,26 @@ public class Dealer extends Person {
 	
 	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 3)
 	public void updatePrice(){
+		Context context = ContextUtils.getContext(this);
+		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
+		Iterator itr = transactionNetwork.getEdges(this).iterator();
+		double totalNumberSales = 0;
+		double totalSalesAmount = 0;
+		double totalSalesDrugs = 0;
 		
+		while (itr.hasNext()) {
+			TransEdge edge = (TransEdge) itr.next();
+			for (Transaction transaction : (ArrayList<Transaction>)edge.getTransactionList()) {
+				totalSalesAmount += transaction.getDrugCost();
+				totalSalesDrugs += transaction.getDrugQtyInUnits();
+				totalNumberSales++; 
+			}
+		}
+		
+		double currentTick = ContextCreator.getTickCount();
+		double numDays = currentTick/Settings.stepsInDay;
+		
+		//double expectedSales = numDays
 	}
 	
 	public double returnDrugInUnits(){

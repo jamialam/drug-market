@@ -22,6 +22,7 @@ public class Dealer extends Person {
 	private double lastTimeZeroDrug;
 	private double priceInUnits;
 	private ArrayList<Summary> summaries;
+	private ArrayList<Transaction> lastDayTransactions;
 
 	public Dealer() {
 		setDrugs(Settings.Resupply.constantDrugsUnits);
@@ -29,6 +30,7 @@ public class Dealer extends Person {
 		timeToLeaveMarket = Settings.DealersParams.TimeToLeaveMarket;
 		lastTimeZeroDrug = -1;
 		summaries = new ArrayList<Summary>();
+		lastDayTransactions = new ArrayList<Transaction>();
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -47,8 +49,60 @@ public class Dealer extends Person {
 			summaries.add(summary);
 		}
 		else {
+			summaries.add(progressiveSummary((int)currentTick));
 			
+			// Now update prices ... 
+		}						
+		lastDayTransactions.clear();
+		
+		
+	}
+	
+	/** Calculate the online variance (REF: http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#On-line_algorithm)*/
+	private Summary progressiveSummary(int currentTick) {
+		Summary summary = new Summary();
+		int n = currentTick - 1;
+		double numSales = 0;
+		double salesInUnits = 0;
+		
+		for (Transaction transaction : lastDayTransactions) {
+			numSales++;
+			salesInUnits += transaction.getDrugQtyInUnits();
 		}
+		
+		int lastIndex = summaries.size()-1;
+		summary.meanNumSales = summaries.get(lastIndex).meanNumSales;
+		summary.meanSalesUnits = summaries.get(lastIndex).meanSalesUnits;
+
+		double deltaNumSales = numSales - summary.meanNumSales;
+		double deltaSalesUnits = salesInUnits - summary.meanSalesUnits;
+		
+		summary.meanNumSales += deltaNumSales/n;
+		summary.meanSalesUnits += deltaSalesUnits/n;
+
+		double m2Num = deltaNumSales*(numSales - summary.meanNumSales);
+		double m2Units = deltaSalesUnits*(salesInUnits - summary.meanSalesUnits);
+		
+		summary.varianceNumSales = m2Num/(n-1);
+		summary.varianceSalesUnits = m2Units/(n-1);
+		
+		return summary;
+		
+		/*def online_variance(data):
+		    n = 0
+		    mean = 0
+		    M2 = 0
+		 
+		    for x in data:
+		        n = n + 1
+		        delta = x - mean
+		        mean = mean + delta/n
+		        M2 = M2 + delta*(x - mean)  # This expression uses the new value of mean
+		 
+		    variance_n = M2/n
+		    variance = M2/(n - 1)
+		    return variance
+		 */			
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -89,9 +143,10 @@ public class Dealer extends Person {
 		}
 	}
 
-	public void sellDrug(double quantity) {
-		deductDrug(quantity);
-		addMoney(Settings.price_per_gram);
+	public void sellDrug(Transaction transaction) {
+		deductDrug(transaction.getDrugQtyInUnits());
+		addMoney(transaction.getDrugCost());
+		lastDayTransactions.add(transaction);	
 	}
 
 	/** 

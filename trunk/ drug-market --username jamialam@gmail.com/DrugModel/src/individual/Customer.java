@@ -94,12 +94,7 @@ public class Customer extends Person {
 		double cost = quantity * Settings.price_per_gram;		
 		Endorsement endorsement = Endorsement.None;
 		
-		//Sale Deed
-		dealer.sellDrug(quantity);
-		addDrug(quantity);
-		deductMoney(cost);
-
-		////to check...
+		//to check...
 		if (deal != null) {
 			endorsement = cost <= deal.getDrugCost() ? Endorsement.Good : Endorsement.Bad;
 			if (deal.getCustomerID() != this.personID) {
@@ -111,6 +106,9 @@ public class Customer extends Person {
 		}
 		
 		Transaction transaction = new Transaction(dealer.getPersonID(), personID, currentTick, cost, quantity, endorsement);
+		buyDrug(transaction);
+		dealer.sellDrug(transaction);
+		
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
 		TransEdge edge;
 		if (transactionNetwork.getEdge(this, dealer) == null) {
@@ -151,6 +149,11 @@ public class Customer extends Person {
 				System.err.println("Customer is null. In update Endorsement. I am: " + personID + " updating endorsement of: " + connectionID);
 			}
 		}
+	}
+	
+	private void buyDrug(Transaction transaction) {
+		addDrug(transaction.getDrugQtyInUnits());
+		deductMoney(transaction.getDrugCost());
 	}
 	
 	private void payTax (Customer connection) {

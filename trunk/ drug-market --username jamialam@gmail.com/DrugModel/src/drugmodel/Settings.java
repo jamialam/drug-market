@@ -30,7 +30,7 @@ public class Settings {
 	//	public static final double consumptionTimePerGram = 8*60;
 	public static final double consumptionStepsPerUnit = stepsInDay/unitsPerGram;
 	/** Initial period. In time steps (days) */	
-	public static double initialPhase = 30*stepsInDay;
+	public static final double initialPhase = 30*stepsInDay;
 	/** We assume this to remain constant for now. */
 	public static double price_per_gram = 120;
 	/** Initially, the units sold per grams is kept same and later varied depending upon the sales. */

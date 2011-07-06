@@ -17,42 +17,47 @@ import repast.simphony.space.graph.Network;
 import repast.simphony.util.ContextUtils;
 
 public class Dealer extends Person {
-	private double priceInUnits;
 	private double timeToLeaveMarket;
 	private double lastTimeZeroDrug;
+	private double priceInUnits;
 	
+	private double[] variance = new double[3];
+
 	public Dealer() {
 		setDrugs(Settings.Resupply.constantDrugsUnits);
 		priceInUnits = (Settings.price_per_gram/Settings.units_per_gram);
 		timeToLeaveMarket = Settings.DealersParams.TimeToLeaveMarket;
 		lastTimeZeroDrug = -1;
 	}
-	
-	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 3)
-	public void updatePrice(){
+
+	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.stepsInDay, priority = 3)
+	public void updatePrice() {
+		double[] mean = new double[3];
+		double[] sumSq = new double[3];
+		double n = Settings.initialPhase/Settings.stepsInDay;
+		
 		Context context = ContextUtils.getContext(this);
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
 		Iterator itr = transactionNetwork.getEdges(this).iterator();
-		double totalNumberSales = 0;
-		double totalSalesAmount = 0;
-		double totalSalesDrugs = 0;
-		
-		while (itr.hasNext()) {
-			TransEdge edge = (TransEdge) itr.next();
-			for (Transaction transaction : (ArrayList<Transaction>)edge.getTransactionList()) {
-				totalSalesAmount += transaction.getDrugCost();
-				totalSalesDrugs += transaction.getDrugQtyInUnits();
-				totalNumberSales++; 
-			}
-		}
-		
 		double currentTick = ContextCreator.getTickCount();
-		double numDays = currentTick/Settings.stepsInDay;
+		if ((int)currentTick == Settings.initialPhase) {
+			//now calculate averages
+			while (itr.hasNext()) {
+				TransEdge edge = (TransEdge) itr.next();
+				for (Transaction transaction : (ArrayList<Transaction>) edge.getTransactionList()) {
+/*					totalSalesAmount += transaction.getDrugCost();
+					totalSalesDrugs += transaction.getDrugQtyInUnits();
+					totalNumberSales++; 			
+					sumSq[0] = totalSalesAmount*totalSalesAmount;
+					sumSq[1] = totalSalesDrugs*totalSalesDrugs;
+					n++;
+*/				}
+			}						
+		}		
 		
-		//double expectedSales = numDays
 	}
-	
-	public double returnDrugInUnits(){
+
+	public double returnDrugInUnits() {
 		if (ContextCreator.getTickCount() <= Settings.initialPhase) {
 			return Settings.units_per_gram;
 		}
@@ -61,7 +66,7 @@ public class Dealer extends Person {
 			return units;
 		}
 	}
-	
+
 	public void sellDrug(double quantity) {
 		deductDrug(quantity);
 		addMoney(Settings.price_per_gram);
@@ -73,7 +78,7 @@ public class Dealer extends Person {
 	 * The first option, dealers are resupplied with the difference between what is remaining and their original supply amount. The second option, dealers could be resupplied with the standard amount and will have to deal with the “surplus.” 
 	 * Dealer agents could grow as there business increases, shrink as their business decreases, and change colors if in the “black” at there last resupply deadline. Alternatively, will only a few dealers it might be nice to see the supplies and surpluses displayed in graphs.  
 	 * If a dealer runs out of customers or drug supply, after X number of cycles of the simulation, they are eliminated. 
-	*/
+	 */
 	@ScheduledMethod(start = 1, interval = Settings.DealersParams.resupplyInterval, priority = 4)
 	public void supplyRegular(){
 		SupplyOption supplyOption = Settings.Resupply.getSupplyOption();;
@@ -82,14 +87,14 @@ public class Dealer extends Person {
 		}
 		this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));						
 	}
-	
+
 	@ScheduledMethod(start = 1, interval = 1, priority = 4)
 	public void supplyAutomatic() {
 		if (this.drugs <= 0.0) {
 			this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
 		}
 	}
-	
+
 	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 4)
 	public void supply() {
 		double currentTick = ContextCreator.getTickCount();
@@ -110,20 +115,20 @@ public class Dealer extends Person {
 			lastTimeZeroDrug = -1;
 		}
 	}
-	
+
 	@SuppressWarnings("rawtypes")
 	@ScheduledMethod(start = 1, interval = Settings.DealersParams.TimeToLeaveMarket, priority = 1)
 	public void dropOut() {		
 		double currentTick = ContextCreator.getTickCount();
 		Context context = ContextUtils.getContext(this);
 		if (	(this.lastTimeZeroDrug != -1
-					&& currentTick - lastTimeZeroDrug > Settings.DealersParams.TimeToLeaveMarket)
+				&& currentTick - lastTimeZeroDrug > Settings.DealersParams.TimeToLeaveMarket)
 				|| isLastTransaction(context, currentTick)
-			) {
+		) {
 			context.remove(this);	
 		}
 	}
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private boolean isLastTransaction(Context context, double currentTick) {
 		Network transactionNetwork = (Network)context.getProjection(Settings.transactionnetwork);

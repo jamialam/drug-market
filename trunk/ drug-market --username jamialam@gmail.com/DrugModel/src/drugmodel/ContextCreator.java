@@ -31,7 +31,7 @@ import repast.simphony.space.graph.Network;
 
 public class ContextCreator implements ContextBuilder<Object> {
 	private static double currentTick = -1;
-	public static Context<Object >mainContext;
+	public static Context<Object> mainContext;
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Context build(Context<Object> context) {

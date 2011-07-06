@@ -3,6 +3,7 @@ package individual;
 /**
  * @author shah
  */
+
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -20,41 +21,62 @@ public class Dealer extends Person {
 	private double timeToLeaveMarket;
 	private double lastTimeZeroDrug;
 	private double priceInUnits;
-	
-	private double[] variance = new double[3];
+	private ArrayList<Summary> summaries;
 
 	public Dealer() {
 		setDrugs(Settings.Resupply.constantDrugsUnits);
 		priceInUnits = (Settings.price_per_gram/Settings.units_per_gram);
 		timeToLeaveMarket = Settings.DealersParams.TimeToLeaveMarket;
 		lastTimeZeroDrug = -1;
+		summaries = new ArrayList<Summary>();
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.stepsInDay, priority = 3)
 	public void updatePrice() {
-		double[] mean = new double[3];
-		double[] sumSq = new double[3];
-		double n = Settings.initialPhase/Settings.stepsInDay;
-		
 		Context context = ContextUtils.getContext(this);
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
 		Iterator itr = transactionNetwork.getEdges(this).iterator();
-		double currentTick = ContextCreator.getTickCount();
-		if ((int)currentTick == Settings.initialPhase) {
-			//now calculate averages
-			while (itr.hasNext()) {
-				TransEdge edge = (TransEdge) itr.next();
-				for (Transaction transaction : (ArrayList<Transaction>) edge.getTransactionList()) {
-/*					totalSalesAmount += transaction.getDrugCost();
-					totalSalesDrugs += transaction.getDrugQtyInUnits();
-					totalNumberSales++; 			
-					sumSq[0] = totalSalesAmount*totalSalesAmount;
-					sumSq[1] = totalSalesDrugs*totalSalesDrugs;
-					n++;
-*/				}
-			}						
+		double currentTick = ContextCreator.getTickCount();		
+
+		if ((int)currentTick < Settings.initialPhase) {
+			return;
+		}
+		else if ((int)currentTick == Settings.initialPhase) {
+			Summary summary = initializeMeanAndVariance(itr);
+			summaries.add(summary);
+		}
+		else {
+			
+		}
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Summary initializeMeanAndVariance(Iterator itr) {
+		int totalDays = (int) Settings.initialPhase;
+		double totalNumSales = 0;
+		double totalUnitsSold = 0;
+		double meanNumSales = 0;
+		double meanSalesUnits = 0;
+		double sumSqUnits = 0;
+		double sumSqNumSales = 0;
+		//now calculate summaries
+		while (itr.hasNext()) {
+			TransEdge edge = (TransEdge) itr.next();
+			for (Transaction transaction : (ArrayList<Transaction>) edge.getTransactionList()) {
+				totalNumSales++;
+				totalUnitsSold += transaction.getDrugQtyInUnits();
+				sumSqUnits += totalUnitsSold*totalUnitsSold;
+				sumSqNumSales += totalNumSales*totalNumSales;
+			}
 		}		
+		Summary summary = new Summary();
+		summary.meanNumSales = totalNumSales/totalDays;
+		summary.meanSalesUnits = totalUnitsSold/totalDays;
+		summary.varianceNumSales = (sumSqUnits - (meanSalesUnits*totalUnitsSold))/(totalDays-1);
+		summary.varianceSalesUnits = (sumSqNumSales - (meanNumSales*totalNumSales))/(totalDays-1);
 		
+		return summary;
 	}
 
 	public double returnDrugInUnits() {
@@ -171,5 +193,19 @@ public class Dealer extends Person {
 
 	public void setPriceInUnits(double priceInUnits) {
 		this.priceInUnits = priceInUnits;
+	}
+	
+	protected class Summary {
+		public double meanSalesUnits;
+		public double meanNumSales;
+		public double varianceSalesUnits;
+		public double varianceNumSales;
+		
+		public Summary() {
+			meanSalesUnits = 0;
+			meanNumSales = 0;
+			varianceSalesUnits = 0;
+			varianceNumSales = 0;			
+		}
 	}
 }

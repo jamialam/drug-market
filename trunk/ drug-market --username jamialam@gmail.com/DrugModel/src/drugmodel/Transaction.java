@@ -8,7 +8,7 @@ public class Transaction {
 	private int dealerID;
 	private int customerID;
 	private Integer time;
-	private Double drugCost;
+	private Double costPerUnit;
 	private Double drugQtyInUnits;
 	private Endorsement endorsement;
 	private double taxAmount; 
@@ -16,7 +16,7 @@ public class Transaction {
 	public Transaction() {
 		ID = ++lastID;
 		time = -1;
-		drugCost = 0d;
+		costPerUnit = 0d;
 		drugQtyInUnits = 0d;
 		endorsement = Endorsement.None;
 		taxAmount = 0.0d;
@@ -27,7 +27,7 @@ public class Transaction {
 		dealerID = _dealerID;
 		customerID = _customerID;
 		time = _time;
-		drugCost = _drugCost;
+		costPerUnit = _drugCost;
 		drugQtyInUnits = _drugQty;
 		endorsement = _endorsement;
 	}
@@ -37,7 +37,7 @@ public class Transaction {
 		dealerID = transaction.getDealerID();
 		customerID = transaction.getCustomerID();
 		time = transaction.getTime();
-		drugCost = transaction.getDrugCost();
+		costPerUnit = transaction.getCostPerUnit();
 		drugQtyInUnits = transaction.getDrugQtyInUnits();
 		endorsement = transaction.getEndorsement();
 	}
@@ -50,12 +50,12 @@ public class Transaction {
 		this.time = time;
 	}
 
-	public Double getDrugCost() {
-		return drugCost;
+	public Double getCostPerUnit() {
+		return costPerUnit;
 	}
 
-	public void setDrugCost(Double drugCost) {
-		this.drugCost = drugCost;
+	public void setCostPerUnit(Double drugCost) {
+		this.costPerUnit = drugCost;
 	}
 
 	public Double getDrugQtyInUnits() {
@@ -91,7 +91,7 @@ public class Transaction {
 	}
 	
 	public void print() {
-		System.out.println("Trans: " + ID + " dealerID: " + dealerID + " time: " + time + " cost: " + drugCost + " qty: " + drugQtyInUnits + " endorsement: " + endorsement);
+		System.out.println("Trans: " + ID + " dealerID: " + dealerID + " time: " + time + " cost: " + costPerUnit + " qty: " + drugQtyInUnits + " endorsement: " + endorsement);
 	}
 
 	public double getTaxAmount() {

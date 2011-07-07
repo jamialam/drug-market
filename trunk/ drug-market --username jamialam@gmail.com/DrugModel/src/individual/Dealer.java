@@ -10,7 +10,7 @@ import java.util.Iterator;
 import drugmodel.ContextCreator;
 import drugmodel.Settings;
 import drugmodel.Settings.SupplyOption;
-import drugmodel.TransEdge;
+import drugmodel.TransactionEdge;
 import drugmodel.Transaction;
 import repast.simphony.context.Context;
 import repast.simphony.engine.schedule.ScheduledMethod;
@@ -20,13 +20,13 @@ import repast.simphony.util.ContextUtils;
 public class Dealer extends Person {
 	private double timeToLeaveMarket;
 	private double lastTimeZeroDrug;
-	private double priceInUnits;
+	private double unitsToSell;
 	private ArrayList<Summary> summaries;
 	private ArrayList<Transaction> lastDayTransactions;
 
 	public Dealer() {
 		setDrugs(Settings.Resupply.constantDrugsUnits);
-		priceInUnits = (Settings.price_per_gram/Settings.units_per_gram);
+		unitsToSell = Settings.unitsPerGram;
 		timeToLeaveMarket = Settings.DealersParams.TimeToLeaveMarket;
 		lastTimeZeroDrug = -1;
 		summaries = new ArrayList<Summary>();
@@ -41,6 +41,8 @@ public class Dealer extends Person {
 		Iterator itr = transactionNetwork.getEdges(this).iterator();
 		double currentTick = ContextCreator.getTickCount();		
 
+		unitsToSell = Settings.unitsPerGram;
+		
 		if ((int)currentTick < Settings.initialPhase) {
 			return;
 		}
@@ -49,27 +51,37 @@ public class Dealer extends Person {
 			summaries.add(summary);
 		}
 		else {
-			summaries.add(progressiveSummary((int)currentTick));
+			double numSales = 0;
+			double salesInUnits = 0;
+			for (Transaction transaction : lastDayTransactions) {
+				numSales++;
+				salesInUnits += transaction.getDrugQtyInUnits();
+			}			
+			int lastIndex = summaries.size()-1;
+			double diff = salesInUnits - summaries.get(lastIndex).meanSalesUnits;
 			
-			// Now update prices ... 
+			double unitsToSell = Settings.unitsPerGram;
+			
+			if (diff < 0) {
+				unitsToSell = unitsToSell + diff;
+				
+			}		 
+			else if (diff > 0) {
+				unitsToSell = unitsToSell - diff;				
+			}				
+			//Skipping the case when the difference is zero.					
+			
+			//calculate mean and variance for the next day based on today's sales.
+			summaries.add(progressiveSummary((int)currentTick, numSales, salesInUnits));
 		}						
-		lastDayTransactions.clear();
-		
-		
+		lastDayTransactions.clear();			
 	}
 	
 	/** Calculate the online variance (REF: http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#On-line_algorithm)*/
-	private Summary progressiveSummary(int currentTick) {
+	private Summary progressiveSummary(int currentTick, double numSales, double salesInUnits) {
 		Summary summary = new Summary();
 		int n = currentTick - 1;
-		double numSales = 0;
-		double salesInUnits = 0;
-		
-		for (Transaction transaction : lastDayTransactions) {
-			numSales++;
-			salesInUnits += transaction.getDrugQtyInUnits();
-		}
-		
+
 		int lastIndex = summaries.size()-1;
 		summary.meanNumSales = summaries.get(lastIndex).meanNumSales;
 		summary.meanSalesUnits = summaries.get(lastIndex).meanSalesUnits;
@@ -116,7 +128,7 @@ public class Dealer extends Person {
 		double sumSqNumSales = 0;
 		//now calculate summaries
 		while (itr.hasNext()) {
-			TransEdge edge = (TransEdge) itr.next();
+			TransactionEdge edge = (TransactionEdge) itr.next();
 			for (Transaction transaction : (ArrayList<Transaction>) edge.getTransactionList()) {
 				totalNumSales++;
 				totalUnitsSold += transaction.getDrugQtyInUnits();
@@ -133,26 +145,24 @@ public class Dealer extends Person {
 		return summary;
 	}
 
-	public double returnDrugInUnits() {
-		if (ContextCreator.getTickCount() <= Settings.initialPhase) {
-			return Settings.units_per_gram;
-		}
-		else {
-			double units = (Settings.price_per_gram/priceInUnits);
-			return units;
-		}
+	public double returnUnitsToSell() {
+		return unitsToSell;
+	}
+	
+	public double returnCostPerUnit() {
+		return (unitsToSell/Settings.pricePerGram);
 	}
 
 	public void sellDrug(Transaction transaction) {
 		deductDrug(transaction.getDrugQtyInUnits());
-		addMoney(transaction.getDrugCost());
+		addMoney(Settings.pricePerGram);
 		lastDayTransactions.add(transaction);	
 	}
 
 	/** 
 	 * 	Dealers are supplied an inventory of drugs on a schedule, based on the cycles of the model, with a standard amount of drug (we could start with 12 grams supplied every three weeks). They all start with the same amount. If dealers run out of drug supplies to sell 
-	 * before their scheduled resupply they are automatically resupplied. If at the resupply time dealer still has drug to sell there can be two options (to play with in experiments). 
-	 * The first option, dealers are resupplied with the difference between what is remaining and their original supply amount. The second option, dealers could be resupplied with the standard amount and will have to deal with the “surplus.” 
+	 * before their scheduled re-supply they are automatically re-supplied. If at the re-supply time dealer still has drug to sell there can be two options (to play with in experiments). 
+	 * The first option, dealers are re-supplied with the difference between what is remaining and their original supply amount. The second option, dealers could be resupplied with the standard amount and will have to deal with the “surplus.” 
 	 * Dealer agents could grow as there business increases, shrink as their business decreases, and change colors if in the “black” at there last resupply deadline. Alternatively, will only a few dealers it might be nice to see the supplies and surpluses displayed in graphs.  
 	 * If a dealer runs out of customers or drug supply, after X number of cycles of the simulation, they are eliminated. 
 	 */
@@ -213,7 +223,7 @@ public class Dealer extends Person {
 		//flag to check if there is a previous transaction within the period.
 		boolean flag = false;
 		while (itr.hasNext()) {
-			TransEdge edge = (TransEdge) itr.next();
+			TransactionEdge edge = (TransactionEdge) itr.next();
 			if (edge.getTransactionList().isEmpty() == false) {
 				int size = edge.getTransactionList().size();				
 				Transaction transaction = (Transaction) edge.getTransactionList().get(size-1);
@@ -241,14 +251,6 @@ public class Dealer extends Person {
 	public void setLastTimeZeroDrug(double lastTimeZeroDrug) {
 		this.lastTimeZeroDrug = lastTimeZeroDrug;
 	}
-
-	public double getPriceInUnits() {
-		return priceInUnits;
-	}
-
-	public void setPriceInUnits(double priceInUnits) {
-		this.priceInUnits = priceInUnits;
-	}
 	
 	protected class Summary {
 		public double meanSalesUnits;
@@ -262,5 +264,13 @@ public class Dealer extends Person {
 			varianceSalesUnits = 0;
 			varianceNumSales = 0;			
 		}
+	}
+
+	public double getUnitsToSell() {
+		return unitsToSell;
+	}
+
+	public void setUnitsToSell(double unitsToSell) {
+		this.unitsToSell = unitsToSell;
 	}
 }

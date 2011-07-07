@@ -5,26 +5,26 @@ import java.util.ArrayList;
 import repast.simphony.space.graph.RepastEdge;
 
 @SuppressWarnings("rawtypes")
-public class TransEdge<T> extends RepastEdge{
+public class TransactionEdge<T> extends RepastEdge{
 	
 	//private EdgeDataMap<Integer, Transaction> transactionData;
 	private ArrayList<Transaction> transactionList; 
 	
 	@SuppressWarnings("unchecked")
-	public TransEdge(Object source, Object target, boolean directed, double weight) {
+	public TransactionEdge(Object source, Object target, boolean directed, double weight) {
 		super(source, target, directed, weight);
 		initialize();
 	}
 	
 	@SuppressWarnings("unchecked")
-	public TransEdge(Object source, Object target,	boolean directed) {
+	public TransactionEdge(Object source, Object target,	boolean directed) {
 		super(source, target, directed);
 		initialize();
 	}
 	
 	@SuppressWarnings("unchecked")
 	/** Called when the edge is undirected. */	
-	public TransEdge(Object source, Object target) {
+	public TransactionEdge(Object source, Object target) {
 		super(source, target, false);
 		initialize();
 	}

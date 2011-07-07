@@ -65,7 +65,7 @@ public class ContextCreator implements ContextBuilder<Object> {
 
 		//Now generate the customer-dealer network - Unconnected and Undirected.  
 		Network transactionnetwork = NetworkFactoryFinder.createNetworkFactory(null).createNetwork(
-				Settings.transactionnetwork, context, false, new TransEdgeCreator());
+				Settings.transactionnetwork, context, false, new TransactionEdgeCreator());
 
 		//Now assign to each customer, some dealers from a range of [minDealers, maxDealers] (default:[1,3]) 
 		Iterator custItr = context.getObjects(Customer.class).iterator();
@@ -74,7 +74,7 @@ public class ContextCreator implements ContextBuilder<Object> {
 			do {
 				Dealer dealer = (Dealer)(context.getRandomObjects(Dealer.class, 1).iterator().next());
 				if (transactionnetwork.getEdge(customer, dealer) == null) {
-					transactionnetwork.addEdge(new TransEdge(customer, dealer, false));
+					transactionnetwork.addEdge(new TransactionEdge(customer, dealer, false));
 				}
 			} while(transactionnetwork.getDegree(customer) < customer.getInitKnownDealers());
 			if (Settings.errorLog) {

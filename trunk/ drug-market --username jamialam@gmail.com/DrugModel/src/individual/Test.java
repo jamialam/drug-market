@@ -26,7 +26,7 @@ public class Test {
 			if (Math.random() <= 0.5) {
 				deal.setDealerID(3);
 				if (Math.random() <= 0.1)
-					deal.setDrugCost(0.0);
+					deal.setCostPerUnit(0.0);
 			}			
 			deals.add(deal);
 			deal.print();						
@@ -35,8 +35,8 @@ public class Test {
 		Collections.sort(deals, new Comparator<Transaction>() {
 			public int compare(Transaction trans1, Transaction trans2) {
 				if (trans1.getDealerID() != trans2.getDealerID()) {
-					return trans1.getDrugCost() > trans2.getDrugCost() ? +1 
-							: (trans1.getDrugCost() == trans2.getDrugCost()) ? 0 : -1;				
+					return trans1.getCostPerUnit() > trans2.getCostPerUnit() ? +1 
+							: (trans1.getCostPerUnit() == trans2.getCostPerUnit()) ? 0 : -1;				
 				}
 				else {
 					return trans1.getTime() < trans2.getTime() ? +1 

@@ -17,9 +17,7 @@ public class Settings {
 	public static double endTime = 1000.0;
 	public static int minDealerCustomerlinks = 1;
 	public static int maxDealerCustomerlinks = 3;
-
-	//12 Units = 1 gram
-	public static final double unitsPerGram = 12;	
+	
 	//In Minutes - Each time step is 10 minutes
 	public static final double step = 10;
 	//8 hours = 1 Day
@@ -28,13 +26,13 @@ public class Settings {
 	public static final double stepsInDay = (hoursInDay*60)/step;
 	//	//in minutes
 	//	public static final double consumptionTimePerGram = 8*60;
-	public static final double consumptionStepsPerUnit = stepsInDay/unitsPerGram;
 	/** Initial period. In time steps (days) */	
 	public static final double initialPhase = 30*stepsInDay;
 	/** We assume this to remain constant for now. */
-	public static double price_per_gram = 120;
+	public static double pricePerGram = 120;
 	/** Initially, the units sold per grams is kept same and later varied depending upon the sales. */
-	public static double units_per_gram = 12; 
+	public static double unitsPerGram = 12;
+	public static final double consumptionStepsPerUnit = stepsInDay/unitsPerGram;
 
 	public static enum SupplyOption {Automatic, RegularConstant, RegularSurplus};
 	public static enum DealerSelection {Random, MyBest, NetworkBest};
@@ -68,20 +66,20 @@ public class Settings {
 	public static class Tax {
 		public static TaxType taxType = TaxType.FlatFee;
 		//1/2 unit price
-		public static double flatFee = (double) 0.5 * (price_per_gram/units_per_gram);
+		public static double flatFee = (double) 0.5 * (pricePerGram/unitsPerGram);
 		//1/2 unit
-		public static double amountDrugInUnits = 1.0; 		
+		public static double percentageInUnits = 1.0; 		
 		public static double returnTaxCost() {
 			if (taxType.equals(TaxType.FlatFee)) {
 				return flatFee;
 			}
 			else {
-				return ((double) amountDrugInUnits * (price_per_gram/units_per_gram));
+				return ((double) percentageInUnits * (pricePerGram/unitsPerGram));
 			}
 		}
 		
-		public static double returnDrugInUnits() {
-			return amountDrugInUnits;
+		public static double returnPercentageInUnits() {
+			return percentageInUnits;
 		}
 	}
 

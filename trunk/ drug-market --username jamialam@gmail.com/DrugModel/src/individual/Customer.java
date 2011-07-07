@@ -20,7 +20,7 @@ import drugmodel.Settings.DealerSelection;
 import drugmodel.Settings.Endorsement;
 import drugmodel.Settings.SupplyOption;
 import drugmodel.Settings.TaxType;
-import drugmodel.TransEdge;
+import drugmodel.TransactionEdge;
 import drugmodel.Transaction;
 
 public class Customer extends Person {
@@ -38,7 +38,7 @@ public class Customer extends Person {
 		this.context = (Context)ContextUtils.getContext(this);
 		initialize();
 	}
-	
+
 	private void initialize() {
 		this.initKnownDealers = Uniform.staticNextIntFromTo(Settings.minDealerCustomerlinks, Settings.maxDealerCustomerlinks);
 		this.initialBudget = Settings.Budget.returnInitialBudget();
@@ -47,7 +47,7 @@ public class Customer extends Person {
 			this.tax = Settings.Tax.returnTaxCost();
 		}
 		else {
-			this.tax = Settings.Tax.returnDrugInUnits();
+			this.tax = Settings.Tax.returnPercentageInUnits();
 		}
 		this.numBadAllowed = Settings.CustomerParams.returnBadAllowed();
 		this.lastTransaction = null;
@@ -61,10 +61,10 @@ public class Customer extends Person {
 	 *   i.e., they evaluate the units sold at the lowest price, i.e., the lowest number from above.
 	 *   Of course, they can only make this determination after they have bought the drug.
 	 */
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 3)
-	public void buyDrugs() {
+	public void buyDrugsandEndorseDeals() {
 		Transaction deal;
 		if (Settings.DealersParams.dealerSelection.equals(DealerSelection.NetworkBest)) {
 			deal = returnBestDealsFromNetwork();
@@ -88,38 +88,41 @@ public class Customer extends Person {
 				System.err.println("Dealer is null or not found. In buyDrugs(). Me: " + personID);
 			}
 		}		 
-		
+
 		int currentTick = (int) ContextCreator.getTickCount();
-		double quantity = dealer.returnDrugInUnits();
-		double cost = quantity * Settings.price_per_gram;		
+		double unitsPurchased = dealer.returnUnitsToSell();
+		//Cost is kept fixed.
+		double costPerUnit = dealer.returnCostPerUnit();		
 		Endorsement endorsement = Endorsement.None;
-		
-		//to check...
-		if (deal != null) {
-			endorsement = cost <= deal.getDrugCost() ? Endorsement.Good : Endorsement.Bad;
-			if (deal.getCustomerID() != this.personID) {
-				updateEndorsement(deal.getCustomerID(), endorsement);
-			}
+
+		if (deal != null
+				&& deal.getCustomerID() != this.personID) {
+			endorsement = unitsPurchased >= deal.getDrugQtyInUnits() ? Endorsement.Good : Endorsement.Bad;
+			updateEndorsement(deal.getCustomerID(), endorsement);
 		}
+		//It is my own dealer and there wasn't a deal information used. 
 		else if (lastTransaction != null) {
-			endorsement = cost <= lastTransaction.getDrugCost() ? Endorsement.Good : Endorsement.Bad;
+			endorsement = unitsPurchased >= lastTransaction.getDrugQtyInUnits() ? Endorsement.Good : Endorsement.Bad;
 		}
-		
-		Transaction transaction = new Transaction(dealer.getPersonID(), personID, currentTick, cost, quantity, endorsement);
+
+		Transaction transaction = new Transaction(dealer.getPersonID(), personID, currentTick, costPerUnit, unitsPurchased, endorsement);
+
 		buyDrug(transaction);
 		dealer.sellDrug(transaction);
-		
+
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
-		TransEdge edge;
+		TransactionEdge edge;
 		if (transactionNetwork.getEdge(this, dealer) == null) {
-			edge = new TransEdge(this, dealer);
+			edge = new TransactionEdge(this, dealer);
 			transactionNetwork.addEdge(edge);
 		}
 		else {
-			edge = (TransEdge) transactionNetwork.getEdge(this, dealer);	
+			edge = (TransactionEdge) transactionNetwork.getEdge(this, dealer);	
 		}		
+
 		edge.addTransaction(transaction);
 		this.lastTransaction = transaction;		
+
 		//Now pay tax or commission
 		if (deal != null) {
 			if (deal.getCustomerID() != this.personID) {
@@ -128,7 +131,7 @@ public class Customer extends Person {
 			}
 		}
 	}
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void updateEndorsement(int connectionID, Endorsement endorsement) {
 		boolean updated = false;
@@ -150,12 +153,12 @@ public class Customer extends Person {
 			}
 		}
 	}
-	
+
 	private void buyDrug(Transaction transaction) {
 		addDrug(transaction.getDrugQtyInUnits());
-		deductMoney(transaction.getDrugCost());
+		deductMoney(Settings.pricePerGram);
 	}
-	
+
 	private void payTax (Customer connection) {
 		if (Settings.Tax.taxType.equals(TaxType.FlatFee)) {
 			double amount = connection.getTax();
@@ -193,7 +196,6 @@ public class Customer extends Person {
 		}
 	}
 
-	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 2)
 	public void evaluateConnections() {
@@ -213,7 +215,7 @@ public class Customer extends Person {
 			socialNetwork.removeEdge(edge);
 		}
 	}
-	
+
 	@SuppressWarnings("rawtypes")
 	private boolean shouldDropLink(SNEdge edge) {
 		int numBadEndorsements = edge.returnNumBadEndorsements();
@@ -224,7 +226,7 @@ public class Customer extends Person {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * In this method we also pay tax to the one who had sent a 'good deal' that we used.  
 	 * 
@@ -271,7 +273,7 @@ public class Customer extends Person {
 		}
 		return dealer;
 	}	*/
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private Person returnMyConnection(int connectionID, String networkName) {
 		Network network;
@@ -312,7 +314,7 @@ public class Customer extends Person {
 		ArrayList<Transaction> deals = new ArrayList<Transaction>();
 		while (itr.hasNext()) { 
 			Dealer dealer = (Dealer) itr.next();
-			TransEdge transEdge = (TransEdge) transactionNetwork.getEdge(this, dealer);
+			TransactionEdge transEdge = (TransactionEdge) transactionNetwork.getEdge(this, dealer);
 			if (transEdge.getLastTransactionIndex() != -1) {
 				deals.add(transEdge.getLastTransaction());
 			}
@@ -330,8 +332,16 @@ public class Customer extends Person {
 		}
 		Collections.sort(deals, new Comparator<Transaction>() {
 			public int compare(Transaction trans1, Transaction trans2) {
-				double cost1 = trans1.getDrugCost() + trans1.getTaxAmount();
-				double cost2 = trans2.getDrugCost() + trans2.getTaxAmount();				
+				double cost1 = 0;
+				double cost2 = 0;
+				if (Settings.Tax.taxType.equals(TaxType.FlatFee)) {					
+					cost1 = (Settings.pricePerGram + trans1.getTaxAmount())/trans1.getDrugQtyInUnits();
+					cost2 = (Settings.pricePerGram + trans2.getTaxAmount())/trans2.getDrugQtyInUnits();
+				}
+				else if (Settings.Tax.taxType.equals((TaxType.AmountDrug))) {
+					cost1 = -1*(trans1.getDrugQtyInUnits() - (trans1.getDrugQtyInUnits()*Settings.Tax.returnPercentageInUnits())); 
+					cost2 = -1*(trans2.getDrugQtyInUnits() - (trans2.getDrugQtyInUnits()*Settings.Tax.returnPercentageInUnits()));					
+				}
 				if (trans1.getDealerID() != trans2.getDealerID()) {					
 					return cost1 > cost2 ? +1 : cost1 == cost2 ? 0 : -1;				
 				}
@@ -353,7 +363,7 @@ public class Customer extends Person {
 		ArrayList<Transaction> deals = new ArrayList<Transaction>();
 		while (itr.hasNext()) { 
 			Dealer dealer = (Dealer) itr.next();
-			TransEdge transEdge = (TransEdge) transactionNetwork.getEdge(this, dealer);
+			TransactionEdge transEdge = (TransactionEdge) transactionNetwork.getEdge(this, dealer);
 			if (transEdge.getLastTransactionIndex() != -1) {
 				deals.add(transEdge.getLastTransaction());
 			}
@@ -362,8 +372,8 @@ public class Customer extends Person {
 			Collections.shuffle(deals);
 			Collections.sort(deals, new Comparator<Transaction>() {
 				public int compare(Transaction t1, Transaction t2) {
-					return t1.getDrugCost() < t2.getDrugCost() ? +1 
-							: (t1.getDrugCost() == t2.getDrugCost()) ? 0 : -1;
+					return t1.getDrugQtyInUnits() > t2.getDrugQtyInUnits() ? +1 
+							: (t1.getCostPerUnit() == t2.getCostPerUnit()) ? 0 : -1;
 				}
 			});
 			bestDeal = deals.get(0);

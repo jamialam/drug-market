@@ -10,23 +10,13 @@ import individual.Dealer;
 import java.util.Iterator;
 
 import generator.Generator;
-import cern.jet.random.Uniform;
-
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.Point;
-
 
 import repast.simphony.context.Context;
-import repast.simphony.context.space.gis.GeographyFactory;
-import repast.simphony.context.space.gis.GeographyFactoryFinder;
 import repast.simphony.context.space.graph.NetworkFactoryFinder;
 import repast.simphony.dataLoader.ContextBuilder;
 import repast.simphony.engine.environment.RunEnvironment;
 import repast.simphony.engine.schedule.ISchedule;
 import repast.simphony.engine.schedule.ScheduleParameters;
-import repast.simphony.space.gis.Geography;
-import repast.simphony.space.gis.GeographyParameters;
 import repast.simphony.space.graph.Network;
 
 public class ContextCreator implements ContextBuilder<Object> {

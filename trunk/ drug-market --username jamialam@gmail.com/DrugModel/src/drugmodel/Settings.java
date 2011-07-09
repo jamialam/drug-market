@@ -11,8 +11,10 @@ public class Settings {
 	public static final String transactionnetwork = "transactionnetwork";
 	public static final String socialnetwork = "socialnetwork";
 
-	public static int initCustomers = 100;
-	public static int initDealers = 10;
+//	public static int initCustomers = 100;
+//	public static int initDealers = 10;
+	public static int initCustomers = 30;
+	public static int initDealers = 4;
 	public static int maxCoordinate = 1000;
 	public static double endTime = 1000.0;
 	public static int minDealerCustomerlinks = 1;
@@ -26,8 +28,9 @@ public class Settings {
 	public static final double stepsInDay = (hoursInDay*60)/step;
 	//	//in minutes
 	//	public static final double consumptionTimePerGram = 8*60;
-	/** Initial period. In time steps (days) */	
-	public static final double initialPhase = 5*stepsInDay;
+	public static final double numDaysInitialPhase = 5;
+	/** Initial period. In time steps (days) */
+	public static final double initialPhase = numDaysInitialPhase*stepsInDay;
 	/** We assume this to remain constant for now. */
 	public static double pricePerGram = 120;
 	/** Initially, the units sold per grams is kept same and later varied depending upon the sales. */
@@ -39,10 +42,10 @@ public class Settings {
 
 	public static class DealersParams {
 		public static DealerSelection dealerSelection = DealerSelection.NetworkBest;  
-		public static final int DealerRessuplyIntervalInDays = 21;
+		public static final int DealerRessuplyIntervalInDays = 14;
 		/** Resupply interval*/
 		public static final int resupplyInterval = (int)(DealersParams.DealerRessuplyIntervalInDays * stepsInDay);
-		public static final double TimeToLeaveMarketInDays = 7d;
+		public static final double TimeToLeaveMarketInDays = 21d;
 		//This is the one read by the Dealer
 		public static final double TimeToLeaveMarket = TimeToLeaveMarketInDays * stepsInDay;
 	}

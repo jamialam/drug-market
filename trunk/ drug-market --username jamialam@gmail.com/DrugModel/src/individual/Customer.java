@@ -92,16 +92,16 @@ public class Customer extends Person {
 			return;
 		}
 		Transaction deal = null;
+		Dealer dealer = null;
 		if (Settings.DealersParams.dealerSelection.equals(DealerSelection.NetworkBest)) {
 //			deal = returnBestDealsFromNetworkfromPrevShared(); // this is the other implementation relying on shareDeals();
-			deal = returnBestDealsFromNetwork();
+			deal = returnBestDealsFromNetwork();			
 			}
 		else if (Settings.DealersParams.dealerSelection.equals(DealerSelection.MyBest)) {
 			deal = returnMyBestDeal();			
 		}		
-		
-		Dealer dealer = null;
-		if (deal != null) {
+		if (deal != null 
+				&& Settings.DealersParams.dealerSelection != DealerSelection.Random) {
 			dealer = deal.getDealer();
 		}
 		else {
@@ -365,9 +365,9 @@ public class Customer extends Person {
 		if (deals.isEmpty()) {
 			return null;
 		}		
-		for (Transaction deal : deals){
+/*		for (Transaction deal : deals){
 			System.out.println(deal.getDrugQtyInUnits());
-		}
+		}*/
 		Collections.sort(deals, new Comparator<Transaction>() {
 				public int compare(Transaction trans1, Transaction trans2) {
 				double cost1 = 0;
@@ -485,7 +485,7 @@ public class Customer extends Person {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected Dealer returnMyRandomDealer() {
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
-		System.out.println("Customer Dealer degree: " + transactionNetwork.getDegree(this));
+		//System.out.println("Customer Dealer degree: " + transactionNetwork.getDegree(this));
 		Dealer dealer = (Dealer) transactionNetwork.getRandomAdjacent(this);
 		if (Settings.errorLog) {
 			if (dealer == null || dealer instanceof Dealer == false) {

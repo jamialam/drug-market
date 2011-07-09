@@ -4,10 +4,11 @@ package individual;
  * @author shah
  */
 
-import java.util.ArrayList;
+import java.
+util.ArrayList;
 import java.util.Iterator;
 
-import cern.jet.random.Uniform;
+import cern.jet.random.Normal;
 
 import drugmodel.ContextCreator;
 import drugmodel.Settings;
@@ -57,9 +58,12 @@ public class Dealer extends Person {
 				salesInUnits += transaction.getDrugQtyInUnits();
 			}			
 			int lastIndex = summaries.size()-1;
-			double diff = salesInUnits - summaries.get(lastIndex).meanSalesUnits;
-			
-			double unitsToSell = Settings.unitsPerGram;
+			/*System.out.println("Dealer: " + personID + " avgsalesInUnits: " + salesInUnits/numSales);*/
+			double diff = (salesInUnits/numSales) 
+						- (summaries.get(lastIndex).meanSalesUnits/summaries.get(lastIndex).meanNumSales);
+/*			System.out.println("Dealer: " + personID + " mean units: " + summaries.get(lastIndex).meanSalesUnits/summaries.get(lastIndex).meanNumSales);
+			System.out.println("Dealer: " + personID + " difference: " + diff);*/
+			unitsToSell = Settings.unitsPerGram;
 			
 			if (diff < 0) {
 				unitsToSell = unitsToSell + diff;
@@ -72,6 +76,7 @@ public class Dealer extends Person {
 			
 			//calculate mean and variance for the next day based on today's sales.
 			summaries.add(progressiveSummary((int)currentTick, numSales, salesInUnits));
+			/*System.out.println("" + personID + " in tick: " + currentTick + " is settings units to sell: " + this.unitsToSell);*/
 		}						
 		lastDayTransactions.clear();			
 	}
@@ -118,11 +123,9 @@ public class Dealer extends Person {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private Summary initializeMeanAndVariance(Iterator itr) {
-		int totalDays = (int) Settings.initialPhase;
+		int totalDays = (int) (Settings.initialPhase/Settings.stepsInDay);
 		double totalNumSales = 0;
 		double totalUnitsSold = 0;
-		double meanNumSales = 0;
-		double meanSalesUnits = 0;
 		double sumSqUnits = 0;
 		double sumSqNumSales = 0;
 		//now calculate summaries
@@ -138,14 +141,24 @@ public class Dealer extends Person {
 		Summary summary = new Summary();
 		summary.meanNumSales = totalNumSales/totalDays;
 		summary.meanSalesUnits = totalUnitsSold/totalDays;
-		summary.varianceNumSales = (sumSqUnits - (meanSalesUnits*totalUnitsSold))/(totalDays-1);
-		summary.varianceSalesUnits = (sumSqNumSales - (meanNumSales*totalNumSales))/(totalDays-1);
+		summary.varianceNumSales = (sumSqUnits - (summary.meanNumSales*totalUnitsSold))/(totalDays-1);
+		summary.varianceSalesUnits = (sumSqNumSales - (summary.meanSalesUnits*totalNumSales))/(totalDays-1);
+		
+		System.out.println("" + summary.meanNumSales + ", " + summary.meanSalesUnits + ", " 
+				+ summary.varianceNumSales + ", " + summary.varianceSalesUnits);
 		
 		return summary;
 	}
 
+	/**
+	 * TODO: Replace the Normal function, currently, only for testing purposes 
+	 * and link it  the updatePrice method. 
+	 * @return
+	 */
 	public double returnUnitsToSell() {
-		//return Uniform.staticNextDoubleFromTo(9,12);
+		do {
+			unitsToSell = Normal.staticNextDouble(12, 3);
+		} while (unitsToSell <= 0);
 		return unitsToSell;
 	}
 	
@@ -214,7 +227,7 @@ public class Dealer extends Person {
 		Context context = ContextUtils.getContext(this);
 		if (	(this.lastTimeZeroDrug != -1
 				&& currentTick - lastTimeZeroDrug > Settings.DealersParams.TimeToLeaveMarket)
-				|| isLastTransaction(context, currentTick)
+					|| isLastTransactionLongAgo(context, currentTick)
 		) {
 			System.out.println("Dealer dropping out. :  " + personID);
 			context.remove(this);	
@@ -222,7 +235,7 @@ public class Dealer extends Person {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private boolean isLastTransaction(Context context, double currentTick) {
+	private boolean isLastTransactionLongAgo(Context context, double currentTick) {
 		Network transactionNetwork = (Network)context.getProjection(Settings.transactionnetwork);
 		Iterator itr = transactionNetwork.getEdges(this).iterator();
 		//flag to check if there is a previous transaction within the period.
@@ -232,7 +245,7 @@ public class Dealer extends Person {
 			if (edge.getTransactionList().isEmpty() == false) {
 				int size = edge.getTransactionList().size();				
 				Transaction transaction = (Transaction) edge.getTransactionList().get(size-1);
-				if (currentTick - transaction.getTime() >= Settings.DealersParams.TimeToLeaveMarket) {
+				if (currentTick - transaction.getTime() > Settings.DealersParams.TimeToLeaveMarket) {
 					flag = true;
 					break;
 				}

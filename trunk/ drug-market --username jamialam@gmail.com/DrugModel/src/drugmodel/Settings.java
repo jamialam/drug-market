@@ -27,18 +27,18 @@ public class Settings {
 	//	//in minutes
 	//	public static final double consumptionTimePerGram = 8*60;
 	/** Initial period. In time steps (days) */	
-	public static final double initialPhase = 30*stepsInDay;
+	public static final double initialPhase = 5*stepsInDay;
 	/** We assume this to remain constant for now. */
 	public static double pricePerGram = 120;
 	/** Initially, the units sold per grams is kept same and later varied depending upon the sales. */
 	public static double unitsPerGram = 12;
-	public static final double consumptionStepsPerUnit = stepsInDay/unitsPerGram;
+	public static final double consumptionStepsPerUnit = unitsPerGram/stepsInDay;
 
 	public static enum SupplyOption {Automatic, RegularConstant, RegularSurplus};
 	public static enum DealerSelection {Random, MyBest, NetworkBest};
 
 	public static class DealersParams {
-		public static DealerSelection dealerSelection = DealerSelection.Random;  
+		public static DealerSelection dealerSelection = DealerSelection.NetworkBest;  
 		public static final int DealerRessuplyIntervalInDays = 21;
 		/** Resupply interval*/
 		public static final int resupplyInterval = (int)(DealersParams.DealerRessuplyIntervalInDays * stepsInDay);
@@ -51,7 +51,7 @@ public class Settings {
 		public static int CustomerIncomeIntervalInDays = 21;
 		public static final int incomeInterval = (int)(CustomerIncomeIntervalInDays * stepsInDay);
 		//magic number
-		public static final double shareDealProb = 0.35;
+		public static final double shareDealProb = 0.75;
 		public static final int defaultBadAllowed = 11;
 		
 		public static int returnBadAllowed() {
@@ -84,8 +84,8 @@ public class Settings {
 	}
 
 	public static class Resupply {
-		private static SupplyOption supplyOption = SupplyOption.RegularConstant;
-		private static SupplyOption incomeOption = SupplyOption.RegularConstant;
+		private static SupplyOption supplyOption = SupplyOption.Automatic;//.RegularConstant;
+		private static SupplyOption incomeOption = SupplyOption.Automatic;//RegularSurplus;//RegularConstant;
 		/** 12 grams */		
 		public static double constantDrugsGrams = 12;
 		public static double constantDrugsUnits = constantDrugsGrams * 12;

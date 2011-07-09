@@ -1,11 +1,12 @@
 package drugmodel;
 
+import individual.Dealer;
 import drugmodel.Settings.Endorsement;
 
 public class Transaction {
 	private static int lastID = -1;
 	private int ID;
-	private int dealerID;
+	private Dealer dealer;
 	private int customerID;
 	private Integer time;
 	private Double costPerUnit;
@@ -22,9 +23,10 @@ public class Transaction {
 		taxAmount = 0.0d;
 	}
 	
-	public Transaction(int _dealerID, int _customerID, Integer _time, double _drugCost, double _drugQty, Endorsement _endorsement) {
+	public Transaction(Dealer _dealer, int _customerID, Integer _time, double _drugCost, double _drugQty, Endorsement _endorsement) {
 		ID = ++lastID;
-		dealerID = _dealerID;
+		//dealerID = _dealerID;
+		dealer = _dealer;
 		customerID = _customerID;
 		time = _time;
 		costPerUnit = _drugCost;
@@ -34,7 +36,7 @@ public class Transaction {
 	
 	public Transaction(Transaction transaction) {
 		ID = ++lastID;
-		dealerID = transaction.getDealerID();
+		dealer = transaction.getDealer();
 		customerID = transaction.getCustomerID();
 		time = transaction.getTime();
 		costPerUnit = transaction.getCostPerUnit();
@@ -74,14 +76,6 @@ public class Transaction {
 		this.endorsement = endorsement;
 	}
 
-	public int getDealerID() {
-		return dealerID;
-	}
-
-	public void setDealerID(int dealerID) {
-		this.dealerID = dealerID;
-	}
-
 	public int getCustomerID() {
 		return customerID;
 	}
@@ -91,7 +85,7 @@ public class Transaction {
 	}
 	
 	public void print() {
-		System.out.println("Trans: " + ID + " dealerID: " + dealerID + " time: " + time + " cost: " + costPerUnit + " qty: " + drugQtyInUnits + " endorsement: " + endorsement);
+		System.out.println("Trans: " + ID + " dealerID: " + dealer.getPersonID() + " time: " + time + " cost: " + costPerUnit + " qty: " + drugQtyInUnits + " endorsement: " + endorsement);
 	}
 
 	public double getTaxAmount() {
@@ -100,5 +94,13 @@ public class Transaction {
 
 	public void setTaxAmount(double taxAmount) {
 		this.taxAmount = taxAmount;
+	}
+	
+	public Dealer getDealer() {
+		return dealer;
+	}
+
+	public void setDealer(Dealer dealer) {
+		this.dealer = dealer;
 	}
 }

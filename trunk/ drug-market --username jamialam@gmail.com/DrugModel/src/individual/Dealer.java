@@ -154,6 +154,10 @@ public class Dealer extends Person {
 	}
 
 	public void sellDrug(Transaction transaction) {
+		if(this.drugs < unitsToSell && Settings.Resupply.getSupplyOption().equals(SupplyOption.Automatic)){
+			supplyAutomatic();
+		}
+			
 		deductDrug(transaction.getDrugQtyInUnits());
 		addMoney(Settings.pricePerGram);
 		lastDayTransactions.add(transaction);	
@@ -166,7 +170,7 @@ public class Dealer extends Person {
 	 * Dealer agents could grow as there business increases, shrink as their business decreases, and change colors if in the “black” at there last resupply deadline. Alternatively, will only a few dealers it might be nice to see the supplies and surpluses displayed in graphs.  
 	 * If a dealer runs out of customers or drug supply, after X number of cycles of the simulation, they are eliminated. 
 	 */
-	@ScheduledMethod(start = 1, interval = Settings.DealersParams.resupplyInterval, priority = 4)
+	@ScheduledMethod(start = 1, interval = Settings.DealersParams.resupplyInterval, priority = 5)
 	public void supplyRegular(){
 		SupplyOption supplyOption = Settings.Resupply.getSupplyOption();;
 		if ( supplyOption.equals(SupplyOption.Automatic) == true) {
@@ -175,14 +179,14 @@ public class Dealer extends Person {
 		this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));						
 	}
 
-	@ScheduledMethod(start = 1, interval = 1, priority = 4)
+	@ScheduledMethod(start = 1, interval = 1, priority = 5)
 	public void supplyAutomatic() {
-		if (this.drugs <= 0.0) {
+		if (this.drugs < unitsToSell ) {
 			this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
 		}
 	}
 
-	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 4)
+	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 5)
 	public void supply() {
 		double currentTick = ContextCreator.getTickCount();
 		if (this.drugs <= 0 && lastTimeZeroDrug == -1)  {
@@ -204,7 +208,7 @@ public class Dealer extends Person {
 	}
 
 	@SuppressWarnings("rawtypes")
-	@ScheduledMethod(start = 1, interval = Settings.DealersParams.TimeToLeaveMarket, priority = 1)
+	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.DealersParams.TimeToLeaveMarket, priority = 1)
 	public void dropOut() {		
 		double currentTick = ContextCreator.getTickCount();
 		Context context = ContextUtils.getContext(this);
@@ -212,6 +216,7 @@ public class Dealer extends Person {
 				&& currentTick - lastTimeZeroDrug > Settings.DealersParams.TimeToLeaveMarket)
 				|| isLastTransaction(context, currentTick)
 		) {
+			System.out.println("Dealer dropping out. :  " + personID);
 			context.remove(this);	
 		}
 	}

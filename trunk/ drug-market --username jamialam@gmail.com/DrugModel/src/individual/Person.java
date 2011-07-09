@@ -9,14 +9,16 @@ public class Person extends Object {
 	protected double entryTick; 
 	protected double exitTick;
 	/** Amount of drugs in grams. */
-	protected Double drugs;
+	protected double drugs;
 	/** Money available to purchase drugs. */
-	protected Double money;
+	protected double money;
 	
 	public Person() {
 		this.personID = ++lastID;
 		entryTick = RunEnvironment.getInstance().getCurrentSchedule().getTickCount();
 		exitTick = -1;
+		money = 0d;
+		drugs = 0d;
 	}
 	
 	public void addMoney(double amount) {
@@ -41,7 +43,8 @@ public class Person extends Object {
 	/** Deduct drug in grams. */
 	public void deductDrug(double amount) {
 		if (Settings.errorLog && amount > drugs) {
-			System.out.println("Amount: " + amount + " to be deducted is larger than drugs: " + drugs + ". Seting drugs zero.");
+			System.err.println("Amount: " + amount + " to be deducted is larger than drugs: " + drugs + ". Seting drugs zero." 
+					+ (this instanceof  Dealer ? " Dealer" : " Customer"));
 			drugs = 0d;
 		}
 		else {

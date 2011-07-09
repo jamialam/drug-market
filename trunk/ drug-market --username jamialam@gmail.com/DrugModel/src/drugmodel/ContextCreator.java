@@ -38,19 +38,20 @@ public class ContextCreator implements ContextBuilder<Object> {
 		context.setId("drugmodel");
 		ContextCreator.mainContext = context;
 
-		GeographyParameters<Object> geoparams = new GeographyParameters<Object>();
+		/*		GeographyParameters<Object> geoparams = new GeographyParameters<Object>();
 		GeographyFactory factory = GeographyFactoryFinder.createGeographyFactory(null);
 		Geography neighbourhood = factory.createGeography("city", context, geoparams);
-		GeometryFactory fac = new GeometryFactory(); 
+		GeometryFactory fac = new GeometryFactory();*/ 
 
 		// We first create customers 
 		for (int i=0; i<Settings.initCustomers; i++) {
-			Customer customer = new Customer();
+			Customer customer = new Customer(context);
 			context.add(customer);			
-			Coordinate coord = new Coordinate(Uniform.staticNextIntFromTo(0,Settings.maxCoordinate),Uniform.staticNextIntFromTo(0,Settings.maxCoordinate));
+			/*			Coordinate coord = new Coordinate(Uniform.staticNextIntFromTo(0,Settings.maxCoordinate),Uniform.staticNextIntFromTo(0,Settings.maxCoordinate));
 			Point geom = fac.createPoint(coord); 
-			neighbourhood.move(customer, geom); 
+			neighbourhood.move(customer, geom);*/ 
 		}
+
 		//First embed all the customer agents in to a network. 
 		@SuppressWarnings("unused")
 		Network socialnetwork = Generator.returnNetwork(context, Settings.generator_type);
@@ -58,9 +59,9 @@ public class ContextCreator implements ContextBuilder<Object> {
 		for (int i=0; i<Settings.initDealers; i++) {
 			Dealer dealer = new Dealer();
 			context.add(dealer);
-			Coordinate coord = new Coordinate(Uniform.staticNextIntFromTo(0,Settings.maxCoordinate),Uniform.staticNextIntFromTo(0,Settings.maxCoordinate));
+			/*			Coordinate coord = new Coordinate(Uniform.staticNextIntFromTo(0,Settings.maxCoordinate),Uniform.staticNextIntFromTo(0,Settings.maxCoordinate));
 			Point geom = fac.createPoint(coord); 
-			neighbourhood.move(dealer, geom);
+			neighbourhood.move(dealer, geom);*/
 		}
 
 		//Now generate the customer-dealer network - Unconnected and Undirected.  
@@ -85,8 +86,8 @@ public class ContextCreator implements ContextBuilder<Object> {
 		}
 
 		ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
-		ScheduleParameters params = ScheduleParameters.createRepeating(1,1,1);
-		schedule.schedule(params, this, "updateCurrentTick");
+		ScheduleParameters params = ScheduleParameters.createRepeating(1,1,10);
+		schedule.schedule(params, this, "updateTickCount");
 
 		// If running in batch mode, schedule the simulation to stop time
 		if(RunEnvironment.getInstance().isBatch()){

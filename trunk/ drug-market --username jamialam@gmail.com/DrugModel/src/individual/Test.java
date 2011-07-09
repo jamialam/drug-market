@@ -20,18 +20,18 @@ public class Test {
 		double cost = 0;
 		Endorsement endorsment = Endorsement.None;
 		for (int i=0; i<10; i++) {
-			time = Uniform.staticNextIntFromTo(1, 4);
+/*			time = Uniform.staticNextIntFromTo(1, 4);
 			cost = Uniform.staticNextDoubleFromTo(50, 100);
-			Transaction deal = new Transaction(i, -1, time, cost, 0.0, endorsment);
+			Transaction deal = new Transaction(i, , time, cost, 0.0, endorsment);
 			if (Math.random() <= 0.5) {
 				deal.setDealerID(3);
 				if (Math.random() <= 0.1)
 					deal.setCostPerUnit(0.0);
 			}			
 			deals.add(deal);
-			deal.print();						
+			deal.print();*/						
 		}
-
+/*
 		Collections.sort(deals, new Comparator<Transaction>() {
 			public int compare(Transaction trans1, Transaction trans2) {
 				if (trans1.getDealerID() != trans2.getDealerID()) {
@@ -44,7 +44,7 @@ public class Test {
 				}
 			}
 		});		
-
+*/
 		System.out.println("----------after sorting --------------");
 		for (Transaction deal: deals) {
 			deal.print();

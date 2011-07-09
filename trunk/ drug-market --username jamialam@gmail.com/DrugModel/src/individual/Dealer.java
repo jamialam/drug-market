@@ -7,6 +7,8 @@ package individual;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import cern.jet.random.Uniform;
+
 import drugmodel.ContextCreator;
 import drugmodel.Settings;
 import drugmodel.Settings.SupplyOption;
@@ -34,7 +36,7 @@ public class Dealer extends Person {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.stepsInDay, priority = 3)
+	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.stepsInDay, priority = 6)
 	public void updatePrice() {
 		Context context = ContextUtils.getContext(this);
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
@@ -43,10 +45,7 @@ public class Dealer extends Person {
 
 		unitsToSell = Settings.unitsPerGram;
 		
-		if ((int)currentTick < Settings.initialPhase) {
-			return;
-		}
-		else if ((int)currentTick == Settings.initialPhase) {
+		if ((int)currentTick == Settings.initialPhase) {
 			Summary summary = initializeMeanAndVariance(itr);
 			summaries.add(summary);
 		}
@@ -146,6 +145,7 @@ public class Dealer extends Person {
 	}
 
 	public double returnUnitsToSell() {
+		//return Uniform.staticNextDoubleFromTo(9,12);
 		return unitsToSell;
 	}
 	
@@ -232,7 +232,7 @@ public class Dealer extends Person {
 			if (edge.getTransactionList().isEmpty() == false) {
 				int size = edge.getTransactionList().size();				
 				Transaction transaction = (Transaction) edge.getTransactionList().get(size-1);
-				if (currentTick - transaction.getTime() <= Settings.DealersParams.TimeToLeaveMarket) {
+				if (currentTick - transaction.getTime() >= Settings.DealersParams.TimeToLeaveMarket) {
 					flag = true;
 					break;
 				}

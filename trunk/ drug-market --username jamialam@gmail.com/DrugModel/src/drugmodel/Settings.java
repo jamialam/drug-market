@@ -65,6 +65,9 @@ public class Settings {
 	
 	public static class Tax {
 		public static TaxType taxType = TaxType.FlatFee;
+		public static double max_tax = 10;
+		public static double min_tax = 5;
+		
 		//1/2 unit price
 		public static double flatFee = (double) 0.5 * (pricePerGram/unitsPerGram);
 		//1/2 unit
@@ -81,6 +84,11 @@ public class Settings {
 		public static double returnPercentageInUnits() {
 			return percentageInUnits;
 		}
+		public static double returnMaxTax() {
+			return max_tax ;
+		}
+		
+		
 	}
 
 	public static class Resupply {
@@ -120,6 +128,22 @@ public class Settings {
 			default: break;
 			}
 			return amountInDollars;			
+		}
+		public static double income_and_tax(double currentMoney) {
+			double amountInDollars = 0;
+			switch(supplyOption) {
+			case Automatic: 
+				amountInDollars = constantMoney;
+				break;
+			case RegularConstant:
+				amountInDollars = constantMoney - currentMoney;
+				break;
+			case RegularSurplus:
+				amountInDollars = constantMoney;
+				break;
+			default: break;
+			}
+			return amountInDollars + Tax.max_tax;			
 		}
 
 		public static double resupplyDrugs(double currentDrugs) {

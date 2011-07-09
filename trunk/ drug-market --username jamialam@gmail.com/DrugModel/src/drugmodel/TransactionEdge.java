@@ -36,7 +36,7 @@ public class TransactionEdge<T> extends RepastEdge{
 	}
 	
 	public int getLastTransactionIndex() {
-		if (transactionList.isEmpty()) {
+		if (transactionList.isEmpty() ) {
 			return -1;
 		}
 		else {

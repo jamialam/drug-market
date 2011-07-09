@@ -32,6 +32,7 @@ public class Transaction {
 		costPerUnit = _drugCost;
 		drugQtyInUnits = _drugQty;
 		endorsement = _endorsement;
+		taxAmount = 0.0d;
 	}
 	
 	public Transaction(Transaction transaction) {
@@ -42,6 +43,7 @@ public class Transaction {
 		costPerUnit = transaction.getCostPerUnit();
 		drugQtyInUnits = transaction.getDrugQtyInUnits();
 		endorsement = transaction.getEndorsement();
+		taxAmount = transaction.getTaxAmount();
 	}
 
 	public Integer getTime() {

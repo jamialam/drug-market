@@ -21,9 +21,10 @@ import repast.simphony.space.graph.Network;
 import repast.simphony.util.ContextUtils;
 
 public class Dealer extends Person {
+	private double unitsToSell;
 	private double timeToLeaveMarket;
 	private double lastTimeZeroDrug;
-	private double unitsToSell;
+	private double timeLastTransaction; 
 	private ArrayList<Summary> summaries;
 	private ArrayList<Transaction> lastDayTransactions;
 
@@ -32,6 +33,7 @@ public class Dealer extends Person {
 		unitsToSell = Settings.unitsPerGram;
 		timeToLeaveMarket = Settings.DealersParams.TimeToLeaveMarket;
 		lastTimeZeroDrug = -1;
+		timeLastTransaction = 0d;
 		summaries = new ArrayList<Summary>();
 		lastDayTransactions = new ArrayList<Transaction>();
 	}
@@ -167,13 +169,15 @@ public class Dealer extends Person {
 	}
 
 	public void sellDrug(Transaction transaction) {
+	//added by SA
 		if(this.drugs < unitsToSell && Settings.Resupply.getSupplyOption().equals(SupplyOption.Automatic)){
 			supplyAutomatic();
 		}
 			
 		deductDrug(transaction.getDrugQtyInUnits());
 		addMoney(Settings.pricePerGram);
-		lastDayTransactions.add(transaction);	
+		lastDayTransactions.add(transaction);
+		timeLastTransaction = transaction.getTime();
 	}
 
 	/** 
@@ -183,7 +187,7 @@ public class Dealer extends Person {
 	 * Dealer agents could grow as there business increases, shrink as their business decreases, and change colors if in the “black” at there last resupply deadline. Alternatively, will only a few dealers it might be nice to see the supplies and surpluses displayed in graphs.  
 	 * If a dealer runs out of customers or drug supply, after X number of cycles of the simulation, they are eliminated. 
 	 */
-	@ScheduledMethod(start = 1, interval = Settings.DealersParams.resupplyInterval, priority = 5)
+/*	@ScheduledMethod(start = 1, interval = Settings.DealersParams.resupplyInterval, priority = 5)
 	public void supplyRegular(){
 		SupplyOption supplyOption = Settings.Resupply.getSupplyOption();;
 		if ( supplyOption.equals(SupplyOption.Automatic) == true) {
@@ -193,20 +197,22 @@ public class Dealer extends Person {
 	}
 
 	@ScheduledMethod(start = 1, interval = 1, priority = 5)
-	public void supplyAutomatic() {
+*/	public void supplyAutomatic() {
 		if (this.drugs < unitsToSell ) {
 			this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
 		}
 	}
 
-	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 5)
+//	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 5)
+	@ScheduledMethod(start = 1, interval = 1, priority = 6)
 	public void supply() {
 		double currentTick = ContextCreator.getTickCount();
 		if (this.drugs <= 0 && lastTimeZeroDrug == -1)  {
+//		if (this.drugs < unitsToSell && lastTimeZeroDrug == -1)  {
 			lastTimeZeroDrug = currentTick;
 		}
 		if (Settings.Resupply.getSupplyOption().equals(SupplyOption.Automatic)) {
-			if (this.drugs <= 0.0) {
+			if (this.drugs <  unitsToSell ) {
 				this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
 			}	
 		}
@@ -216,6 +222,7 @@ public class Dealer extends Person {
 			}
 		}
 		if (this.drugs > 0) {
+//		if (this.drugs > unitsToSell) {
 			lastTimeZeroDrug = -1;
 		}
 	}
@@ -227,14 +234,17 @@ public class Dealer extends Person {
 		Context context = ContextUtils.getContext(this);
 		if (	(this.lastTimeZeroDrug != -1
 				&& currentTick - lastTimeZeroDrug > Settings.DealersParams.TimeToLeaveMarket)
-					|| isLastTransactionLongAgo(context, currentTick)
-		) {
+					|| currentTick - timeLastTransaction > Settings.DealersParams.TimeToLeaveMarket
+//					|| isLastTransactionLongAgo(context, currentTick)
+//					|| isLastTransactionShortAgo(context, currentTick) == false
+			) 
+			{
 			System.out.println("Dealer dropping out. :  " + personID);
 			context.remove(this);	
 		}
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+/*	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private boolean isLastTransactionLongAgo(Context context, double currentTick) {
 		Network transactionNetwork = (Network)context.getProjection(Settings.transactionnetwork);
 		Iterator itr = transactionNetwork.getEdges(this).iterator();
@@ -253,6 +263,25 @@ public class Dealer extends Person {
 		}
 		return flag;
 	}
+	*/
+/*	private boolean isLastTransactionShortAgo(Context context, double currentTick) {
+		Network transactionNetwork = (Network)context.getProjection(Settings.transactionnetwork);
+		Iterator itr = transactionNetwork.getEdges(this).iterator();
+		//flag to check if there is a previous transaction within the period.
+		boolean flag = false;
+		while (itr.hasNext()) {
+			TransactionEdge edge = (TransactionEdge) itr.next();
+			if (edge.getTransactionList().isEmpty() == false) {
+				int size = edge.getTransactionList().size();				
+				Transaction transaction = (Transaction) edge.getTransactionList().get(size-1);
+				if (currentTick - transaction.getTime() < Settings.DealersParams.TimeToLeaveMarket) {
+					flag = true;
+					break;
+				}
+			}
+		}
+		return flag;
+	}*/
 
 	public double getTimeToLeaveMarket() {
 		return timeToLeaveMarket;
@@ -269,6 +298,22 @@ public class Dealer extends Person {
 	public void setLastTimeZeroDrug(double lastTimeZeroDrug) {
 		this.lastTimeZeroDrug = lastTimeZeroDrug;
 	}
+
+	public double getUnitsToSell() {
+		return unitsToSell;
+	}
+
+	public void setUnitsToSell(double unitsToSell) {
+		this.unitsToSell = unitsToSell;
+	}
+	
+	public double getTimeLastTransaction() {
+		return timeLastTransaction;
+	}
+
+	public void setTimeLastTransaction(double timeLastTransaction) {
+		this.timeLastTransaction = timeLastTransaction;
+	}
 	
 	protected class Summary {
 		public double meanSalesUnits;
@@ -282,13 +327,5 @@ public class Dealer extends Person {
 			varianceSalesUnits = 0;
 			varianceNumSales = 0;			
 		}
-	}
-
-	public double getUnitsToSell() {
-		return unitsToSell;
-	}
-
-	public void setUnitsToSell(double unitsToSell) {
-		this.unitsToSell = unitsToSell;
 	}
 }

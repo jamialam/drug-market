@@ -163,7 +163,7 @@ public class Dealer extends Person {
 	}
 	
 	public double returnCostPerUnit() {
-		return (unitsToSell/Settings.pricePerGram);
+		return (Settings.pricePerGram/this.unitsToSell);
 	}
 
 	public void sellDrug(Transaction transaction) {

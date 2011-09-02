@@ -93,8 +93,6 @@ public class Settings {
 		public static double returnMaxTax() {
 			return max_tax ;
 		}
-		
-		
 	}
 
 	public static class Resupply {

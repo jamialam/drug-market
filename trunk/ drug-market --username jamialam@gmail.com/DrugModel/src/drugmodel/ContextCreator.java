@@ -83,9 +83,27 @@ public class ContextCreator implements ContextBuilder<Object> {
 		if(RunEnvironment.getInstance().isBatch()){
 			RunEnvironment.getInstance().endAt(Settings.endTime);		
 		}				
+		if(verifyNetwork())
+			System.out.println("network verification sucessfull.");
 		return context;
 	}
-
+	public static boolean verifyNetwork(){
+		Iterator customerItr = mainContext.getObjects(Customer.class).iterator();
+		Network socialNetwork = (Network) (mainContext.getProjection(Settings.socialnetwork));
+		
+		Iterator links;
+		Customer _this, link;
+		while(customerItr.hasNext()){
+			_this = (Customer) customerItr.next();
+			links = socialNetwork.getAdjacent(_this).iterator();
+			while(links.hasNext()){
+				link = (Customer) links.next();
+				if(!socialNetwork.isPredecessor(_this,link) || !socialNetwork.isSuccessor(_this, link))
+					return false;
+			}
+		}
+		return true;
+	}
 	@SuppressWarnings("rawtypes")
 	public static Dealer getDealer(int dealerID) {
 		Iterator itr = mainContext.getObjects(Dealer.class).iterator();

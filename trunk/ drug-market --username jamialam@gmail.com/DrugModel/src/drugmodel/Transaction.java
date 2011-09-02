@@ -23,6 +23,10 @@ public class Transaction {
 		taxAmount = 0.0d;
 	}
 	
+	public int getID() {
+		return ID;
+	}
+
 	public Transaction(Dealer _dealer, int _customerID, Integer _time, double _drugCost, double _drugQty, Endorsement _endorsement) {
 		ID = ++lastID;
 		//dealerID = _dealerID;

@@ -11,10 +11,10 @@ public class Settings {
 	public static final String transactionnetwork = "transactionnetwork";
 	public static final String socialnetwork = "socialnetwork";
 
-//	public static int initCustomers = 100;
-//	public static int initDealers = 10;
-	public static int initCustomers = 30;
-	public static int initDealers = 4;
+	public static int initCustomers = 100;
+	public static int initDealers = 10;
+//	public static int initCustomers = 30;
+//	public static int initDealers = 4;
 	public static int maxCoordinate = 1000;
 	public static double endTime = 1000.0;
 	public static int minDealerCustomerlinks = 1;
@@ -55,7 +55,10 @@ public class Settings {
 		public static final int incomeInterval = (int)(CustomerIncomeIntervalInDays * stepsInDay);
 		//magic number
 		public static final double shareDealProb = 0.75;
-		public static final int defaultBadAllowed = 11;
+		public static final int defaultBadAllowed = 15;
+		public static final double TimeFrameToDropLinkInDays = 90d;
+		
+		public static final double defaultTimeFrameToDropLink = TimeFrameToDropLinkInDays * stepsInDay;
 		
 		public static int returnBadAllowed() {
 			return defaultBadAllowed;
@@ -169,7 +172,7 @@ public class Settings {
 
 	public static enum GeneratorType{Unconnected, BarabasiAlbert, KleinbergSmallWorld, 
 		WattsSmallWorld, ErdosRenyiRandom, EppsteinPowerLaw};
-		public static GeneratorType generator_type = GeneratorType.WattsSmallWorld;
+		public static GeneratorType generator_type = GeneratorType.ErdosRenyiRandom;
 		public static class SocialNetworkParam {
 			public static boolean DIRECTED = true;
 			public static String NAME = "socialnetwork";			

@@ -9,6 +9,15 @@ import repast.simphony.space.graph.RepastEdge;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class SNEdge<T> extends RepastEdge {	
+	//Added by SA
+	private class TransactionEndorsement {
+		public Transaction transaction;
+		public Endorsement endorsement;
+		public double endorsementTime;
+	}
+	//hold endorsed deals only
+	private ArrayList<TransactionEndorsement> etransactionList;
+	//by SJA	
 	private ArrayList<Transaction> transactionList;
 	private EnumMap<Endorsement, ArrayList<Double>> endorsements;
 	
@@ -28,18 +37,67 @@ public class SNEdge<T> extends RepastEdge {
 		for (Endorsement endorsement : Endorsement.values()) {
 			endorsements.put(endorsement, new ArrayList<Double>());
 		}
+	//Added by SA
+		etransactionList = new ArrayList<SNEdge<T>.TransactionEndorsement>();
+		
 	}
 	
-	public void addEndorsement(Endorsement endorsement, double time) {
+	public void addEndorsement(Transaction deal , Endorsement endorsement, double time) {
+		
 		endorsements.get(endorsement).add(time);
+
+		//Added by SA
+		TransactionEndorsement etransaction = new TransactionEndorsement();
+		etransaction.transaction = deal;
+		etransaction.endorsement = endorsement;
+		etransaction.endorsementTime = time;
+		etransactionList.add(etransaction);
+//		System.out.println("DEal endorsed and Added");
+/*		if(etransactionList.isEmpty() ){
+			System.err.println("DEal to be endorsed not found. list is empty.");
+		}
+		for (TransactionEndorsement etransaction : etransactionList){
+			if(etransaction.transaction.getID() == deal.getID() ){
+				etransaction.endorsement = endorsement;
+				etransaction.endorsementTime = time;
+				System.out.println("DEal found.");
+				break;
+			}
+		}
+*/			
 	}
-	
+
+	//public void addEndorsement()
 	public void addTransaction(Transaction transaction) {
 		if (transactionList.contains(transaction) == false) {
 			transactionList.add(transaction);
 		}
+		//Added by SA
+/*		TransactionEndorsement etransaction = new TransactionEndorsement();
+		etransaction.transaction = transaction;
+		etransaction.endorsement = Endorsement.None;
+		etransaction.endorsementTime = -1;
+		if (etransactionList.contains(etransaction) == false) {
+			etransactionList.add(etransaction);
+			System.out.println("DEal Added");
+		}
+*/		
 	}
-	
+	public int returnNumBadEndorsement(double time_frame){
+		int bad_deal=0;
+		double currentTick = ContextCreator.getTickCount();
+		if(etransactionList.isEmpty())
+			return 0;
+		for(TransactionEndorsement etransaction : etransactionList){
+			if(currentTick - etransaction.endorsementTime < time_frame 
+					&& etransaction.endorsement == Endorsement.Bad ){
+				++bad_deal;
+				System.out.println("time frame:" + time_frame + " current time:" + currentTick + "  endorsement time:"+ etransaction.endorsementTime  +  "CT - ET: " + (currentTick -etransaction.endorsementTime ));
+			}
+		}
+		System.out.println(bad_deal);
+		return bad_deal;
+	}
 	public int returnLastTransactionIndex() {
 		if (transactionList.isEmpty()) {
 			return -1;

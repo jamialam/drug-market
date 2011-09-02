@@ -124,7 +124,8 @@ public class Customer extends Person {
 		if (deal != null
 				&& deal.getCustomerID() != this.personID) {
 			endorsement = unitsPurchased >= deal.getDrugQtyInUnits() ? Endorsement.Good : Endorsement.Bad;
-			updateEndorsement(deal.getCustomerID(), endorsement);
+//			updateEndorsement(deal.getCustomerID(), endorsement);
+			updateEndorsement(deal , deal.getCustomerID() , endorsement );
 		}
 		//It is my own dealer and there wasn't a deal information used. 
 		else if (lastTransaction != null) {
@@ -159,7 +160,7 @@ public class Customer extends Person {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void updateEndorsement(int connectionID, Endorsement endorsement) {
+	private void updateEndorsement(Transaction deal , int connectionID, Endorsement endorsement) {
 		boolean updated = false;
 		Network socialNetwork = (Network)(context.getProjection(Settings.socialnetwork));
 		Iterator itr = socialNetwork.getAdjacent(this).iterator();
@@ -168,7 +169,8 @@ public class Customer extends Person {
 			if (customer.getPersonID() == connectionID) {
 				SNEdge outEdge = (SNEdge) socialNetwork.getEdge(this, customer);
 				double currentTick = ContextCreator.getTickCount();
-				outEdge.addEndorsement(endorsement, currentTick);
+				//changed by SA
+				outEdge.addEndorsement(deal, endorsement, currentTick);
 				updated = true;
 				break;
 			}
@@ -236,11 +238,14 @@ public class Customer extends Person {
 		ArrayList<SNEdge> removedLinks = new ArrayList<SNEdge>();
 		while (itr.hasNext()) {
 			SNEdge edge = (SNEdge) itr.next();
-			if (shouldDropLink(edge)) {
+			//Added by SA
+			if(shouldDropLinkTF(edge, Settings.CustomerParams.defaultTimeFrameToDropLink)){
+//			if (shouldDropLink(edge)) {
 				//Remove network link with other customer
 				Customer customer = (Customer) edge.getTarget();
 				removedLinks.add((SNEdge)socialNetwork.getEdge(this, customer));
 				removedLinks.add((SNEdge)socialNetwork.getEdge(customer, this));
+				System.out.println("this:" + this.getPersonID() + " drops " + customer.getPersonID() );
 			}
 		}
 		for (SNEdge edge : removedLinks) {
@@ -266,9 +271,18 @@ public class Customer extends Person {
 
 
 	@SuppressWarnings("rawtypes")
-	private boolean shouldDropLink(SNEdge edge) {
+/*	private boolean shouldDropLink(SNEdge edge) {
 		int numBadEndorsements = edge.returnNumBadEndorsements();
 		if (numBadEndorsements >= this.numBadAllowed) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+*/
+	private boolean shouldDropLinkTF(SNEdge edge, double time_frame) {
+		if(edge.returnNumBadEndorsement(Settings.CustomerParams.defaultTimeFrameToDropLink) > this.numBadAllowed ){
 			return true;
 		}
 		else {
@@ -349,18 +363,33 @@ public class Customer extends Person {
 		itr = socialNetwork.getAdjacent(this).iterator();
 		while (itr.hasNext()) {
 			Customer customer = (Customer) itr.next();
-			if (Math.random() <= Settings.CustomerParams.shareDealProb) {
-				Iterator itrDeal = transactionNetwork.getAdjacent(customer).iterator();
-				while (itrDeal.hasNext()) {
+			Iterator itrDeal = transactionNetwork.getAdjacent(customer).iterator();
+			while (itrDeal.hasNext()) {
+				if (Math.random() <= Settings.CustomerParams.shareDealProb) {
 					Dealer dealer = (Dealer) itrDeal.next();
 					TransactionEdge transEdge = (TransactionEdge) transactionNetwork.getEdge(customer, dealer);
 					if (transEdge.getLastTransactionIndex() != -1) {
 						Transaction transaction = transEdge.getLastTransaction();
 						transaction.setTaxAmount(this.tax);
 						deals.add(transaction);
+						//Added by SA
+						SNEdge edge = (SNEdge) socialNetwork.getEdge(customer, this);
+						if(edge == null){
+							System.err.println("Edge null.");
+							System.err.println(socialNetwork.isAdjacent(customer, this));
+							if(!ContextCreator.verifyNetwork())
+								System.out.println("Network verification failed");
+						}
+						try{
+							edge.addTransaction(transaction);
+						}catch (Exception e) {
+							// TODO: handle exception
+							e.printStackTrace();
+							System.out.println("exception caught");
+						}
 					}					
-				}				
-			}
+				}
+			}				
 		}
 		if (deals.isEmpty()) {
 			return null;

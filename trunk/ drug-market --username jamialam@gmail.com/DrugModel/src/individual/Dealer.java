@@ -9,6 +9,7 @@ util.ArrayList;
 import java.util.Iterator;
 
 import cern.jet.random.Normal;
+import cern.jet.random.Uniform;
 
 import drugmodel.ContextCreator;
 import drugmodel.Settings;
@@ -20,6 +21,8 @@ import repast.simphony.engine.schedule.ScheduledMethod;
 import repast.simphony.space.graph.Network;
 import repast.simphony.util.ContextUtils;
 
+@SuppressWarnings({ "rawtypes", "unchecked" })
+
 public class Dealer extends Person {
 	private double unitsToSell;
 	private double timeToLeaveMarket;
@@ -27,19 +30,31 @@ public class Dealer extends Person {
 	private double timeLastTransaction; 
 	private ArrayList<Summary> summaries;
 	private ArrayList<Transaction> lastDayTransactions;
-
+	private int evaluationInterval;
+	private double surplus; 
+	private double dealsPerDay;
+	private double salesPerDay;
+	
+	private double entryTick;
 	public Dealer() {
 		setDrugs(Settings.Resupply.constantDrugsUnits);
 		unitsToSell = Settings.unitsPerGram;
 		timeToLeaveMarket = Settings.DealersParams.TimeToLeaveMarket;
 		lastTimeZeroDrug = -1;
-		timeLastTransaction = 0d;
+		timeLastTransaction = -1;
 		summaries = new ArrayList<Summary>();
 		lastDayTransactions = new ArrayList<Transaction>();
+		// added by sa on 10/9/2011
+		this.drugs = Settings.Resupply.constantDrugsUnits;
+		this.evaluationInterval = Uniform.staticNextIntFromTo(1, (int)Settings.DealersParams.TimeToLeaveMarket);
+		
+		this.surplus = 0.0;
+		dealsPerDay = 0.0;
+		this.entryTick = ContextCreator.getTickCount();
+		this.salesPerDay = 0.0;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.stepsInDay, priority = 6)
+//	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.stepsInDay, priority = 4)
 	public void updatePrice() {
 		Context context = ContextUtils.getContext(this);
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
@@ -123,7 +138,6 @@ public class Dealer extends Person {
 		 */			
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private Summary initializeMeanAndVariance(Iterator itr) {
 		int totalDays = (int) (Settings.initialPhase/Settings.stepsInDay);
 		double totalNumSales = 0;
@@ -151,33 +165,38 @@ public class Dealer extends Person {
 		
 		return summary;
 	}
-
-	/**
-	 * TODO: Replace the Normal function, currently, only for testing purposes 
-	 * and link it  the updatePrice method. 
-	 * @return
-	 */
-	public double returnUnitsToSell() {
-		do {
-			unitsToSell = Normal.staticNextDouble(12, 3);
-		} while (unitsToSell <= 0);
-		return unitsToSell;
-	}
+//TODO
+/*
+ * make everyone interval tick different
+*/
 	
-	public double returnCostPerUnit() {
-		return (Settings.pricePerGram/this.unitsToSell);
-	}
-
-	public void sellDrug(Transaction transaction) {
-	//added by SA
-		if(this.drugs < unitsToSell && Settings.Resupply.getSupplyOption().equals(SupplyOption.Automatic)){
-			supplyAutomatic();
+	@ScheduledMethod(start = 1, interval = 1, priority = 3)
+	public void supply() {
+		double currentTick = ContextCreator.getTickCount();
+		if (this.drugs <= 0 && lastTimeZeroDrug == -1)  {
+			lastTimeZeroDrug = currentTick;
 		}
-			
-		deductDrug(transaction.getDrugQtyInUnits());
-		addMoney(Settings.pricePerGram);
-		lastDayTransactions.add(transaction);
-		timeLastTransaction = transaction.getTime();
+		if (Settings.Resupply.getSupplyOption().equals(SupplyOption.Automatic)) {
+			if (this.drugs <  unitsToSell ) {
+				this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
+			}	
+		}
+		else {
+			if ( ( (currentTick - entryTick) % Settings.DealersParams.resupplyInterval) == 0) {
+				if(Settings.Resupply.getSupplyOption().equals(SupplyOption.RegularSurplus)){
+					this.surplus = this.drugs;  
+					if(this.surplus > Settings.DealersParams.surplusLimit ){
+						System.out.println("tick:"+ ContextCreator.getTickCount()+ " Dealer dropping out due to surplus :  " + personID);
+						Context context = ContextUtils.getContext(this);
+						context.remove(this);	
+					}
+				}
+				this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));		
+			}
+		}
+		if (this.drugs > 0) {
+			lastTimeZeroDrug = -1;
+		}
 	}
 
 	/** 
@@ -187,60 +206,152 @@ public class Dealer extends Person {
 	 * Dealer agents could grow as there business increases, shrink as their business decreases, and change colors if in the “black” at there last resupply deadline. Alternatively, will only a few dealers it might be nice to see the supplies and surpluses displayed in graphs.  
 	 * If a dealer runs out of customers or drug supply, after X number of cycles of the simulation, they are eliminated. 
 	 */
-/*	@ScheduledMethod(start = 1, interval = Settings.DealersParams.resupplyInterval, priority = 5)
-	public void supplyRegular(){
-		SupplyOption supplyOption = Settings.Resupply.getSupplyOption();;
-		if ( supplyOption.equals(SupplyOption.Automatic) == true) {
-			return;
-		}
-		this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));						
-	}
 
-	@ScheduledMethod(start = 1, interval = 1, priority = 5)
-*/	public void supplyAutomatic() {
-		if (this.drugs < unitsToSell ) {
-			this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
-		}
-	}
-
-//	@ScheduledMethod(start = 1, interval = Settings.stepsInDay, priority = 5)
-	@ScheduledMethod(start = 1, interval = 1, priority = 6)
-	public void supply() {
-		double currentTick = ContextCreator.getTickCount();
-		if (this.drugs <= 0 && lastTimeZeroDrug == -1)  {
-//		if (this.drugs < unitsToSell && lastTimeZeroDrug == -1)  {
-			lastTimeZeroDrug = currentTick;
-		}
-		if (Settings.Resupply.getSupplyOption().equals(SupplyOption.Automatic)) {
-			if (this.drugs <  unitsToSell ) {
-				this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
-			}	
-		}
-		else {
-			if (currentTick % Settings.DealersParams.resupplyInterval == 0) {
-				this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));		
-			}
-		}
-		if (this.drugs > 0) {
-//		if (this.drugs > unitsToSell) {
-			lastTimeZeroDrug = -1;
-		}
-	}
-
-	@SuppressWarnings("rawtypes")
-	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.DealersParams.TimeToLeaveMarket, priority = 1)
+	@ScheduledMethod(start = Settings.DealersParams.TimeToLeaveMarket, interval = 1, priority = 3)
 	public void dropOut() {		
 		double currentTick = ContextCreator.getTickCount();
-		Context context = ContextUtils.getContext(this);
-		if (	(this.lastTimeZeroDrug != -1
-				&& currentTick - lastTimeZeroDrug > Settings.DealersParams.TimeToLeaveMarket)
-					|| currentTick - timeLastTransaction > Settings.DealersParams.TimeToLeaveMarket
-//					|| isLastTransactionLongAgo(context, currentTick)
-//					|| isLastTransactionShortAgo(context, currentTick) == false
-			) 
+		
+		if(currentTick - entryTick < Settings.DealersParams.TimeToLeaveMarket )
+			return;
+		
+		if(ContextCreator.getTickCount() == this.evaluationInterval 
+				||	(ContextCreator.getTickCount() % (Settings.DealersParams.TimeToLeaveMarket) ) == this.evaluationInterval ) {
+			Context context = ContextUtils.getContext(this);
+			if (	(this.timeLastTransaction == -1)
+				/*	&& currentTick - lastTimeZeroDrug >= Settings.DealersParams.TimeToLeaveMarket)
+					//no customer
+				*/	||
+					 
+					currentTick - timeLastTransaction > Settings.DealersParams.TimeToLeaveMarket		) 
 			{
-			System.out.println("Dealer dropping out. :  " + personID);
-			context.remove(this);	
+				System.out.println("tick:"+ ContextCreator.getTickCount()+" Dealer dropping out due to NO customer. :  " + personID);
+				context.remove(this);	
+			}
+		}
+	}
+	
+	@ScheduledMethod(start = Settings.stepsInDay, interval = Settings.DealersParams.newDealerInterval, priority = 1)
+	public void newDealer() {		
+		/*double currentTick = ContextCreator.getTickCount();
+		if(ContextCreator.getTickCount() == this.evaluationInterval 
+				||	(ContextCreator.getTickCount() % (Settings.DealersParams.TimeToLeaveMarket) ) == this.evaluationInterval ) {
+*/
+			if (dealsPerDay > Settings.DealersParams.maxDealsLimit ) 
+			{
+								
+				Dealer new_dealer = new Dealer();
+//				System.out.println("new Dealer:  " + new_dealer.getPersonID() + " eval tick : " + new_dealer.getEvaluationInterval());
+
+				Context context = ContextUtils.getContext(this);
+				context.add(new_dealer);
+				Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
+				//check it out.............................
+				int numOfCustomers = transactionNetwork.getDegree(this);
+				System.out.println("tick: "+ ContextCreator.getTickCount()+" Dealer: " + personID + " spliting due to more deals: " + dealsPerDay + "  num of customer: " +numOfCustomers+ "  new Dealer:  " + new_dealer.getPersonID());
+			
+				Iterator itr_customers = transactionNetwork.getEdges(this).iterator();
+				
+				numOfCustomers /= 2;
+				int i=0;
+				Customer customer = null;
+				ArrayList<TransactionEdge> list = new ArrayList<TransactionEdge>(); 
+				ArrayList<Transaction> transactionlist = new ArrayList<Transaction>();
+				
+				while(itr_customers.hasNext()	&&	i < numOfCustomers){
+					TransactionEdge edge = (TransactionEdge) itr_customers.next();
+					
+					Object objS = edge.getSource();
+					Object objT = edge.getTarget();
+					if(objS instanceof Customer){
+						customer  = (Customer) objS;
+					}
+					else if(objT instanceof Customer){
+							customer = (Customer) objT;
+					}
+					else{
+							System.err.println("FATAL ERR: newDealer neither source nor target in transaction edge are customer");
+							return;
+					}
+					list.add(edge);
+					TransactionEdge newEdge = new TransactionEdge(new_dealer, customer);
+					//9/28/2011
+					transactionlist = edge.getTransactionList();
+					for(Transaction transaction : transactionlist ){
+						transaction.setDealer(new_dealer);
+					}
+					newEdge.setTransactionList(transactionlist);
+					/////////////
+					transactionNetwork.addEdge(newEdge);
+					i++;
+				}
+				for(TransactionEdge e : list){
+					transactionNetwork.removeEdge(e);
+				}
+	//			System.out.println("old dealer's customer: " + transactionNetwork.getDegree(this) + "  new dealer's customer: " + transactionNetwork.getDegree(new_dealer));
+			}
+//		}
+			dealsPerDay = 0;
+	//		salesPerDay =0.0;
+	}
+	
+
+	/**
+	 * TODO: Replace the Normal function, currently, only for testing purposes 
+	 * and link it  the updatePrice method. 
+	 * @return
+	 */
+
+	public double returnUnitsToSell() {
+
+		do {
+			unitsToSell = (int) Normal.staticNextDouble(12, 3);
+		} while (unitsToSell <= 0);
+
+		if(this.drugs < unitsToSell ){//&& Settings.Resupply.getSupplyOption().equals(SupplyOption.Automatic)){
+			supplyAutomatic();
+		}
+		
+		return unitsToSell;
+		
+		/*
+		//changes made by SA on 8/9/2001
+		if(this.drugs > unitsToSell)
+			return unitsToSell;
+		else
+			return this.drugs;
+*/	}
+	
+	public double returnCostPerUnit() {
+		//changes made by SA on 8/9/2001
+/*		if(this.drugs > unitsToSell)
+			return (Settings.pricePerGram/this.unitsToSell);
+		else
+			return (Settings.pricePerGram/this.drugs);
+*/
+		return (Settings.pricePerGram/this.unitsToSell);
+	}
+
+	public boolean sellDrug(Transaction transaction) {
+//		if(this.drugs < transaction.getDrugQtyInUnits() )
+//			System.out.println("sell drug: drug is less than qty to sell");
+		if(this.drugs <= 0.0 && Settings.errorLog){
+			System.err.println("Dealer "+this.personID+ "  cant sell. drug amount is zero. " +ContextCreator.getTickCount());
+			return false;
+		}
+		//System.out.println("Dealer "+this.personID+ "  sell drug amount "+ transaction.getDrugQtyInUnits() + " at time "+ContextCreator.getTickCount()+ ". drug left: " + this.drugs);
+		
+		deductDrug(transaction.getDrugQtyInUnits());
+		addMoney(Settings.pricePerGram);
+		lastDayTransactions.add(transaction);
+		timeLastTransaction = transaction.getTime();
+		dealsPerDay++;
+		salesPerDay += transaction.getDrugQtyInUnits();
+		return true;
+	}
+
+	public void supplyAutomatic() {
+		if (this.drugs < unitsToSell ) {
+			this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
 		}
 	}
 
@@ -314,6 +425,9 @@ public class Dealer extends Person {
 	public void setTimeLastTransaction(double timeLastTransaction) {
 		this.timeLastTransaction = timeLastTransaction;
 	}
+	public int getEvaluationInterval() {
+		return evaluationInterval;
+	}
 	
 	protected class Summary {
 		public double meanSalesUnits;
@@ -327,5 +441,11 @@ public class Dealer extends Person {
 			varianceSalesUnits = 0;
 			varianceNumSales = 0;			
 		}
+	}
+
+	public float getSale() {
+		// TODO Auto-generated method stub
+		
+		return (float) salesPerDay;
 	}
 }

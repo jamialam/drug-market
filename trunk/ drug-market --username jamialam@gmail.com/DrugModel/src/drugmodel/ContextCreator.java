@@ -7,7 +7,17 @@ package drugmodel;
 import individual.Customer;
 import individual.Dealer;
 
+import java.awt.GridLayout;
 import java.util.Iterator;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import drugmodel.Settings.Endorsement;
 
 import generator.Generator;
 
@@ -18,6 +28,7 @@ import repast.simphony.engine.environment.RunEnvironment;
 import repast.simphony.engine.schedule.ISchedule;
 import repast.simphony.engine.schedule.ScheduleParameters;
 import repast.simphony.space.graph.Network;
+import repast.simphony.ui.RSApplication;
 
 public class ContextCreator implements ContextBuilder<Object> {
 	private static double currentTick = -1;
@@ -45,8 +56,12 @@ public class ContextCreator implements ContextBuilder<Object> {
 		//First embed all the customer agents in to a network. 
 		@SuppressWarnings("unused")
 		Network socialnetwork = Generator.returnNetwork(context, Settings.generator_type);
-
-		for (int i=0; i<Settings.initDealers; i++) {
+	/*	Iterator itr = context.getObjects(Customer.class).iterator();
+		while(itr.hasNext()){
+			Customer cus = (Customer) itr.next();
+			System.out.println("personID: " + cus.getPersonID() + "  num of link : " + socialnetwork.getDegree(cus) +"  num of in link : " + socialnetwork.getInDegree(cus) +"  num of out link : " + socialnetwork.getOutDegree(cus)) ;
+		}
+	*/	for (int i=0; i<Settings.initDealers; i++) {
 			Dealer dealer = new Dealer();
 			context.add(dealer);
 			/*			Coordinate coord = new Coordinate(Uniform.staticNextIntFromTo(0,Settings.maxCoordinate),Uniform.staticNextIntFromTo(0,Settings.maxCoordinate));
@@ -65,7 +80,12 @@ public class ContextCreator implements ContextBuilder<Object> {
 			do {
 				Dealer dealer = (Dealer)(context.getRandomObjects(Dealer.class, 1).iterator().next());
 				if (transactionnetwork.getEdge(customer, dealer) == null) {
-					transactionnetwork.addEdge(new TransactionEdge(customer, dealer, false));
+					//new code added 
+					TransactionEdge edge = new TransactionEdge(customer, dealer, false);
+					Transaction transaction = new Transaction(dealer, customer.getPersonID(), (int) currentTick,(Settings.pricePerGram / Settings.unitsPerGram ) , Settings.unitsPerGram,Endorsement.None);
+					edge.addTransaction(transaction);
+					transactionnetwork.addEdge(edge);
+					
 				}
 			} while(transactionnetwork.getDegree(customer) < customer.getInitKnownDealers());
 			if (Settings.errorLog) {
@@ -76,6 +96,7 @@ public class ContextCreator implements ContextBuilder<Object> {
 		}
 
 		ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
+		///////////////////////////////WHY priority is 10??
 		ScheduleParameters params = ScheduleParameters.createRepeating(1,1,10);
 		schedule.schedule(params, this, "updateTickCount");
 
@@ -85,6 +106,9 @@ public class ContextCreator implements ContextBuilder<Object> {
 		}				
 		if(verifyNetwork())
 			System.out.println("network verification sucessfull.");
+	
+		makeControlPanel();
+		
 		return context;
 	}
 	public static boolean verifyNetwork(){
@@ -129,4 +153,44 @@ public class ContextCreator implements ContextBuilder<Object> {
 	public static double getTickCount() {
 		return currentTick;
 	}
+	private void makeControlPanel()
+	{
+	JPanel jPanel = new JPanel();
+	jPanel.setBorder(new TitledBorder("Parameter Slider Panel"));
+    jPanel.setLayout(new GridLayout(6,2,15,0));//6 rows, 2 cols,
+    JSlider sliderR;
+    sliderR = setSlider(0, 100, 30, 10, 5);                
+    jPanel.add(new JLabel("Share Deal percentage"));        
+    jPanel.add(sliderR); 
+    
+	RSApplication.getRSApplicationInstance().addCustomUserPanel(jPanel);		
+}
+public JSlider setSlider(
+			int min,  // Slider minimum value
+            int max,  // Slider maximum value
+            int init, // Slider initial value
+            int mjrTkSp, // Major tick spacing
+            int mnrTkSp) // Minor tick spacing
+{
+	JSlider slider;
+	slider = new JSlider(JSlider.HORIZONTAL, min, max, init);
+	slider.setPaintTicks( true );
+	slider.setMajorTickSpacing( mjrTkSp );
+	slider.setMinorTickSpacing( mnrTkSp );
+	slider.setPaintLabels( true );
+	slider.addChangeListener(new SliderListener());
+	return slider;
+}
+
+}
+class SliderListener implements ChangeListener {
+    public void stateChanged(ChangeEvent e) {
+        JSlider source = (JSlider)e.getSource();
+        if (!source.getValueIsAdjusting()) {
+            int fps = (int)source.getValue();
+            Settings.CustomerParams.minshareDealProb = (double)fps/100.0;
+            Settings.CustomerParams.maxshareDealProb = (double)fps/100.0;
+            System.out.println(Settings.CustomerParams.maxshareDealProb);
+        }    
+    }
 }

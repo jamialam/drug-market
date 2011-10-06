@@ -44,7 +44,7 @@ public class Person extends Object {
 	public void deductDrug(double amount) {
 		if (Settings.errorLog && amount > drugs) {
 			System.err.println("Amount: " + amount + " to be deducted is larger than drugs: " + drugs + ". Seting drugs zero." 
-					+ (this instanceof  Dealer ? " Dealer" : " Customer"));
+					+ (this instanceof  Dealer ? " Dealer" : " Customer") + this.getPersonID());
 			drugs = 0d;
 		}
 		else {

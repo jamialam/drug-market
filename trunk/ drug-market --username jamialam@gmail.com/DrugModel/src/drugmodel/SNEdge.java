@@ -19,7 +19,8 @@ public class SNEdge<T> extends RepastEdge {
 	private ArrayList<TransactionEndorsement> etransactionList;
 	//by SJA	
 	private ArrayList<Transaction> transactionList;
-	private EnumMap<Endorsement, ArrayList<Double>> endorsements;
+	//map imp
+//	private EnumMap<Endorsement, ArrayList<Double>> endorsements;
 	
 	public SNEdge(Object source, Object target, boolean directed, double weight) {
 		super(source, target, directed, weight);
@@ -33,18 +34,19 @@ public class SNEdge<T> extends RepastEdge {
 	
 	private void initialize() {
 		transactionList = new ArrayList<Transaction>();
-		endorsements = new EnumMap<Settings.Endorsement, ArrayList<Double>>(Endorsement.class);
+		//map imp
+		/*		endorsements = new EnumMap<Settings.Endorsement, ArrayList<Double>>(Endorsement.class);
 		for (Endorsement endorsement : Endorsement.values()) {
 			endorsements.put(endorsement, new ArrayList<Double>());
 		}
-	//Added by SA
+*/	//Added by SA
 		etransactionList = new ArrayList<SNEdge<T>.TransactionEndorsement>();
 		
 	}
 	
 	public void addEndorsement(Transaction deal , Endorsement endorsement, double time) {
-		
-		endorsements.get(endorsement).add(time);
+	//map imp	
+//		endorsements.get(endorsement).add(time);
 
 		//Added by SA
 		TransactionEndorsement etransaction = new TransactionEndorsement();
@@ -92,10 +94,10 @@ public class SNEdge<T> extends RepastEdge {
 			if(currentTick - etransaction.endorsementTime < time_frame 
 					&& etransaction.endorsement == Endorsement.Bad ){
 				++bad_deal;
-				System.out.println("time frame:" + time_frame + " current time:" + currentTick + "  endorsement time:"+ etransaction.endorsementTime  +  "CT - ET: " + (currentTick -etransaction.endorsementTime ));
+	//			System.out.println("time frame:" + time_frame + " current time:" + currentTick + "  endorsement time:"+ etransaction.endorsementTime  +  "CT - ET: " + (currentTick -etransaction.endorsementTime ));
 			}
 		}
-		System.out.println(bad_deal);
+	//	System.out.println("num of bad deals in window:" + bad_deal);
 		return bad_deal;
 	}
 	public int returnLastTransactionIndex() {
@@ -114,15 +116,15 @@ public class SNEdge<T> extends RepastEdge {
 	public int returnTotalTransactions() {
 		return transactionList.size();
 	}
-	 
-	public int returnNumGoodEndorsements() {
+	//map imp	 
+	/*public int returnNumGoodEndorsements() {
 		return endorsements.get(Endorsement.Good).size();
 	}
 	
 	public int returnNumBadEndorsements() {
 		return endorsements.get(Endorsement.Bad).size();
 	}
-		
+	*/	
 	public int getLastDealIndex() {
 		if (this.transactionList.isEmpty()) {
 			return -1;

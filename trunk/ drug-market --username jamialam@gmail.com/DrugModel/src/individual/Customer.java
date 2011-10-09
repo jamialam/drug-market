@@ -42,7 +42,10 @@ public class Customer extends Person {
 	private int maxLinks;
 	protected HashMap<Integer, Double> droppedLinks;
 
-
+	// for charts and display
+	private double totalTaxPaid;
+	private double totalMoneySpend;
+	
 	public Customer(Context _context) {
 		this.context = _context;
 		initialize();
@@ -66,6 +69,8 @@ public class Customer extends Person {
 		this.evaluationInterval = Uniform.staticNextIntFromTo(1,Settings.CustomerParams.CustomerConnectionEvaluationInterval);
 		this.maxLinks = 0;
 		droppedLinks = new HashMap<Integer, Double>();
+		this.totalTaxPaid = 0.0;
+		this.totalMoneySpend = 0.0;
 	}
 
 	@ScheduledMethod(start = 1, interval = 0, priority = 10)
@@ -77,7 +82,7 @@ public class Customer extends Person {
 	/**
 	 * Agents have unlimited resources to buy drugs and the model only keeps track of how much they spend and use (in units). (Automatic)
 	 */
-	@ScheduledMethod(start = 1, interval = 1, priority = 3)
+	@ScheduledMethod(start = 1, interval = 1, priority = 4)
 	public void income() {
 		double currentTick = ContextCreator.getTickCount();
 
@@ -96,7 +101,7 @@ public class Customer extends Person {
 	/**
 	 * 
 	 */
-	@ScheduledMethod(start = 1, interval = 1, priority = 2)
+	@ScheduledMethod(start = 1, interval = 1, priority = 3)
 	public void useDrugs() {	
 		if(this.drugs < Settings.consumptionUnitsPerStep){
 			if (this.buyDrugsandEndorseDeals() == false){
@@ -107,7 +112,7 @@ public class Customer extends Person {
 		deductDrug(Settings.consumptionUnitsPerStep);
 	}
 
-	@ScheduledMethod(start = 1, interval = 1, priority = 1)
+	@ScheduledMethod(start = 1, interval = 1, priority = 2)
 	public void makeLinks() {
 		if(ContextCreator.getTickCount() == this.evaluationInterval+ 3 
 				||	(ContextCreator.getTickCount() % (Settings.CustomerParams.CustomerConnectionEvaluationInterval ) ) == this.evaluationInterval +3 ) {
@@ -360,12 +365,15 @@ public class Customer extends Person {
 			//Now pay tax or commission
 			if (deal != null &&  deal.getCustomerID() != this.personID) {
 				Customer connection = (Customer) returnMyConnection(deal.getCustomerID(), Settings.socialnetwork);
-				if(connection == null )
+				if(connection == null ){
 					System.err.println("Person to pay tax, not found.");
-				else
-					//	payTax(connection,deal.getDrugQtyInUnits());
-					//	payTax(connection, transaction.getDrugQtyInUnits());
+				}
+				else{
 					payTax(connection, unitsPurchased);
+			//		System.err.println("total tax paid." + this.totalTaxPaid);
+					
+				}
+					
 			}
 			if(Settings.CustomerParams.shareDealMode == Settings.ShareDealMode.ShareWithoutAsking)
 				shareDeal();
@@ -486,6 +494,7 @@ public class Customer extends Person {
 	private void buyDrug(Transaction transaction) {
 		addDrug(transaction.getDrugQtyInUnits());
 		deductMoney(Settings.pricePerGram);
+		this.totalMoneySpend += Settings.pricePerGram;
 	}
 
 	private void payTax (Customer connection, double DrugQtyInUnits) {
@@ -493,6 +502,8 @@ public class Customer extends Person {
 			double amount = connection.getTax();
 			deductMoney(amount);
 			connection.addMoney(amount);
+			totalTaxPaid += amount;
+			
 		}
 		else {
 			double drug_percent = DrugQtyInUnits * connection.getTax()/100;
@@ -500,6 +511,7 @@ public class Customer extends Person {
 				System.err.println("couldnt pay tax...");
 			deductDrug(drug_percent);
 			connection.addDrug(drug_percent);
+			totalTaxPaid += drug_percent;
 		}
 	}
 
@@ -957,6 +969,14 @@ public class Customer extends Person {
 
 	public double getTax() {
 		return tax;
+	}
+
+	public double getTotalTaxPaid() {
+		return totalTaxPaid;
+	}
+
+	public double getTotalMoneySpend() {
+		return totalMoneySpend;
 	}
 
 	public double getShareDealProb() {

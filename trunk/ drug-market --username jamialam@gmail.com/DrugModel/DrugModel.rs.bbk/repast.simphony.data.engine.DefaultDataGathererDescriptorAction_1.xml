@@ -15,23 +15,23 @@
   <aggregateContainer class="repast.simphony.data.logging.gather.DefaultAggregateDataMappingContainer">
     <nameMappingTable>
       <entry>
+        <string>Tick</string>
+        <repast.simphony.data.logging.gather.DefaultTimeDataMapping/>
+      </entry>
+      <entry>
         <string>Num of Customer</string>
         <repast.simphony.data.logging.gather.aggregate.CountMapping>
           <type>Count</type>
         </repast.simphony.data.logging.gather.aggregate.CountMapping>
       </entry>
-      <entry>
-        <string>Tick</string>
-        <repast.simphony.data.logging.gather.DefaultTimeDataMapping/>
-      </entry>
     </nameMappingTable>
     <mappingNameTable>
       <entry>
-        <repast.simphony.data.logging.gather.DefaultTimeDataMapping reference="../../../nameMappingTable/entry[2]/repast.simphony.data.logging.gather.DefaultTimeDataMapping"/>
+        <repast.simphony.data.logging.gather.DefaultTimeDataMapping reference="../../../nameMappingTable/entry/repast.simphony.data.logging.gather.DefaultTimeDataMapping"/>
         <string>Tick</string>
       </entry>
       <entry>
-        <repast.simphony.data.logging.gather.aggregate.CountMapping reference="../../../nameMappingTable/entry/repast.simphony.data.logging.gather.aggregate.CountMapping"/>
+        <repast.simphony.data.logging.gather.aggregate.CountMapping reference="../../../nameMappingTable/entry[2]/repast.simphony.data.logging.gather.aggregate.CountMapping"/>
         <string>Num of Customer</string>
       </entry>
     </mappingNameTable>

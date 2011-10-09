@@ -1,14 +1,14 @@
 <repast.simphony.visualization.engine.DefaultDisplayDescriptor>
-  <name>Transaction Network</name>
-  <type>TWO_D</type>
+  <name>3D transaction Network</name>
+  <type>THREE_D</type>
   <styles>
     <entry>
       <string>individual.Customer</string>
-      <string>repast.simphony.visualizationOGL2D.DefaultStyleOGL2D</string>
+      <string>DisplayStyle.AgentStyle3D</string>
     </entry>
     <entry>
       <string>individual.Dealer</string>
-      <string>repast.simphony.visualization.editedStyle.EditedStyle2D</string>
+      <string>DisplayStyle.AgentStyle3D</string>
     </entry>
   </styles>
   <editedStyles>
@@ -18,30 +18,30 @@
     </entry>
     <entry>
       <string>individual.Dealer</string>
-      <string>individual.Dealer.style_1.xml</string>
+      <null/>
     </entry>
   </editedStyles>
   <netStyles>
     <entry>
       <string>transactionnetwork</string>
-      <string>repast.simphony.visualizationOGL2D.DefaultEdgeStyleOGL2D</string>
+      <string>repast.simphony.visualization.editedStyle.EditedEdgeStyle3D</string>
     </entry>
   </netStyles>
   <editedNetStyles>
     <entry>
       <string>transactionnetwork</string>
-      <null/>
+      <string>transactionnetwork.style_0.xml</string>
     </entry>
   </editedNetStyles>
   <frequency>ON_NEW</frequency>
   <schedParams>
     <start>1.0</start>
     <interval>1.0</interval>
-    <priority>-Infinity</priority>
+    <priority>NaN</priority>
     <duration>-1.0</duration>
     <frequency>REPEAT</frequency>
   </schedParams>
-  <layoutClassName>repast.simphony.visualization.visualization2D.Random2DLayout</layoutClassName>
+  <layoutClassName>repast.simphony.visualization.visualization3D.layout.GEM3DLayout</layoutClassName>
   <layoutProjection>transactionnetwork</layoutProjection>
   <layoutInterval>0</layoutInterval>
   <layerOrder>
@@ -73,9 +73,9 @@
   </projectionDescriptors>
   <props/>
   <backgroundColor>
-    <red>255</red>
-    <green>255</green>
-    <blue>255</blue>
+    <red>0</red>
+    <green>0</green>
+    <blue>0</blue>
     <alpha>255</alpha>
   </backgroundColor>
 </repast.simphony.visualization.engine.DefaultDisplayDescriptor>

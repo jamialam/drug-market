@@ -13,7 +13,7 @@ public class Settings {
 	public static final String socialnetwork = "socialnetwork";
 
 	public static int initCustomers = 25;
-	public static int initDealers = 10;
+	public static int initDealers = 5;
 //	public static int initCustomers = 30;
 //	public static int initDealers = 4;
 	//public static int maxCoordinate = 1000;
@@ -40,7 +40,7 @@ public class Settings {
 
 	public static enum SupplyOption {Automatic, RegularConstant, RegularSurplus};
 	public static enum DealerSelection {Random, MyBest, NetworkBest};
-
+	public static enum DealerType { Greedy, Planner, old};
 	public static class DealersParams {
 		public static DealerSelection dealerSelection = DealerSelection.NetworkBest;  
 		public static final int DealerRessuplyIntervalInDays = 21;
@@ -51,7 +51,7 @@ public class Settings {
 		public static final double TimeToLeaveMarket = TimeToLeaveMarketInDays * stepsInDay;
 		public static final double surplusLimit = 14 * unitsPerGram;
 		public static final double newDealerInterval = 1 * stepsInDay;
-		public static final double maxDealsLimit = 8;
+		public static final double maxDealsLimit = 10;
 		public static final double dealerSelectionProb = 0.8;
 		
 	}
@@ -94,7 +94,7 @@ public class Settings {
 	public static enum TaxType {FlatFee, AmountDrug};
 	
 	public static class Tax {
-		public static TaxType taxType = TaxType.AmountDrug;//FlatFee;
+		public static TaxType taxType = TaxType.FlatFee;
 /*		public static double max_tax = 10;
 		public static double min_tax = 5;
 */		

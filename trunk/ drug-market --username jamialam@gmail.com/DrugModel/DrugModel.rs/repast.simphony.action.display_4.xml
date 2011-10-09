@@ -1,14 +1,10 @@
 <repast.simphony.visualization.engine.DefaultDisplayDescriptor>
-  <name>Transaction Network</name>
+  <name>Social Network</name>
   <type>TWO_D</type>
   <styles>
     <entry>
       <string>individual.Customer</string>
       <string>repast.simphony.visualizationOGL2D.DefaultStyleOGL2D</string>
-    </entry>
-    <entry>
-      <string>individual.Dealer</string>
-      <string>repast.simphony.visualization.editedStyle.EditedStyle2D</string>
     </entry>
   </styles>
   <editedStyles>
@@ -16,20 +12,16 @@
       <string>individual.Customer</string>
       <null/>
     </entry>
-    <entry>
-      <string>individual.Dealer</string>
-      <string>individual.Dealer.style_1.xml</string>
-    </entry>
   </editedStyles>
   <netStyles>
     <entry>
-      <string>transactionnetwork</string>
+      <string>socialnetwork</string>
       <string>repast.simphony.visualizationOGL2D.DefaultEdgeStyleOGL2D</string>
     </entry>
   </netStyles>
   <editedNetStyles>
     <entry>
-      <string>transactionnetwork</string>
+      <string>socialnetwork</string>
       <null/>
     </entry>
   </editedNetStyles>
@@ -42,21 +34,17 @@
     <frequency>REPEAT</frequency>
   </schedParams>
   <layoutClassName>repast.simphony.visualization.visualization2D.Random2DLayout</layoutClassName>
-  <layoutProjection>transactionnetwork</layoutProjection>
+  <layoutProjection>socialnetwork</layoutProjection>
   <layoutInterval>0</layoutInterval>
   <layerOrder>
     <entry>
       <string>individual.Customer</string>
-      <int>1</int>
-    </entry>
-    <entry>
-      <string>individual.Dealer</string>
       <int>0</int>
     </entry>
   </layerOrder>
   <projections>
     <repast.simphony.scenario.data.ProjectionData>
-      <id>transactionnetwork</id>
+      <id>socialnetwork</id>
       <attributes/>
       <type>NETWORK</type>
     </repast.simphony.scenario.data.ProjectionData>
@@ -64,7 +52,7 @@
   <valueLayers/>
   <projectionDescriptors>
     <entry>
-      <string>transactionnetwork</string>
+      <string>socialnetwork</string>
       <repast.simphony.visualization.engine.DefaultProjectionDescriptor>
         <proj reference="../../../../projections/repast.simphony.scenario.data.ProjectionData"/>
         <props/>

@@ -1,6 +1,6 @@
 <repast.simphony.data.engine.DefaultDataGathererDescriptor>
-  <name>Dealer</name>
-  <dataSetId class="string">Dealer</dataSetId>
+  <name>Customer</name>
+  <dataSetId class="string">Customer</dataSetId>
   <scheduleParameters>
     <start>1.0</start>
     <interval>1.0</interval>
@@ -15,28 +15,62 @@
   <aggregateContainer class="repast.simphony.data.logging.gather.DefaultAggregateDataMappingContainer">
     <nameMappingTable>
       <entry>
+        <string>Total Tax Paid in System</string>
+        <repast.simphony.data.logging.gather.aggregate.SumMapping>
+          <type>Sum</type>
+          <decorated class="repast.simphony.data.logging.gather.MethodMapping">
+            <method>
+              <class>individual.Customer</class>
+              <name>getTotalTaxPaid</name>
+              <parameter-types/>
+            </method>
+          </decorated>
+        </repast.simphony.data.logging.gather.aggregate.SumMapping>
+      </entry>
+      <entry>
         <string>Tick</string>
         <repast.simphony.data.logging.gather.DefaultTimeDataMapping/>
       </entry>
       <entry>
-        <string>Num of Dealer</string>
+        <string>Num of Customer</string>
         <repast.simphony.data.logging.gather.aggregate.CountMapping>
           <type>Count</type>
         </repast.simphony.data.logging.gather.aggregate.CountMapping>
       </entry>
+      <entry>
+        <string>Total Money Spend in System</string>
+        <repast.simphony.data.logging.gather.aggregate.SumMapping>
+          <type>Sum</type>
+          <decorated class="repast.simphony.data.logging.gather.MethodMapping">
+            <method>
+              <class>individual.Customer</class>
+              <name>getTotalMoneySpend</name>
+              <parameter-types/>
+            </method>
+          </decorated>
+        </repast.simphony.data.logging.gather.aggregate.SumMapping>
+      </entry>
     </nameMappingTable>
     <mappingNameTable>
       <entry>
-        <repast.simphony.data.logging.gather.DefaultTimeDataMapping reference="../../../nameMappingTable/entry/repast.simphony.data.logging.gather.DefaultTimeDataMapping"/>
+        <repast.simphony.data.logging.gather.DefaultTimeDataMapping reference="../../../nameMappingTable/entry[2]/repast.simphony.data.logging.gather.DefaultTimeDataMapping"/>
         <string>Tick</string>
       </entry>
       <entry>
-        <repast.simphony.data.logging.gather.aggregate.CountMapping reference="../../../nameMappingTable/entry[2]/repast.simphony.data.logging.gather.aggregate.CountMapping"/>
-        <string>Num of Dealer</string>
+        <repast.simphony.data.logging.gather.aggregate.CountMapping reference="../../../nameMappingTable/entry[3]/repast.simphony.data.logging.gather.aggregate.CountMapping"/>
+        <string>Num of Customer</string>
+      </entry>
+      <entry>
+        <repast.simphony.data.logging.gather.aggregate.SumMapping reference="../../../nameMappingTable/entry/repast.simphony.data.logging.gather.aggregate.SumMapping"/>
+        <string>Total Tax Paid in System</string>
+      </entry>
+      <entry>
+        <repast.simphony.data.logging.gather.aggregate.SumMapping reference="../../../nameMappingTable/entry[4]/repast.simphony.data.logging.gather.aggregate.SumMapping"/>
+        <string>Total Money Spend in System</string>
       </entry>
     </mappingNameTable>
     <alternatedNameTable/>
     <nameAlternatedTable/>
   </aggregateContainer>
-  <agentClass>individual.Dealer</agentClass>
+  <agentClass>individual.Customer</agentClass>
 </repast.simphony.data.engine.DefaultDataGathererDescriptor>

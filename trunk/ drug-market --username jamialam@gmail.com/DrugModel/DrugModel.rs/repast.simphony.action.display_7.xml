@@ -33,7 +33,7 @@
       <string>transactionnetwork.style_1.xml</string>
     </entry>
   </editedNetStyles>
-  <frequency>ON_NEW</frequency>
+  <frequency>AT_INTERVAL</frequency>
   <schedParams>
     <start>1.0</start>
     <interval>48.0</interval>
@@ -43,7 +43,7 @@
   </schedParams>
   <layoutClassName>repast.simphony.visualization.visualization3D.layout.GEM3DLayout</layoutClassName>
   <layoutProjection>transactionnetwork</layoutProjection>
-  <layoutInterval>0</layoutInterval>
+  <layoutInterval>2000</layoutInterval>
   <layerOrder>
     <entry>
       <string>individual.Customer</string>

@@ -52,7 +52,7 @@ public class Settings {
 		public static final double surplusLimit = 14 * unitsPerGram;
 		public static final double newDealerInterval = 1 * stepsInDay;
 		public static final double maxDealsLimit = 10;
-		public static final double dealerSelectionProb = 0.8;
+		public static final double dealerSelectionProb = 0.5;
 		
 	}
 	public static enum ShareDealMode {ShareWhenAsked, ShareWithoutAsking};
@@ -98,8 +98,8 @@ public class Settings {
 /*		public static double max_tax = 10;
 		public static double min_tax = 5;
 */		
-		public static double max_FlatFee_in_doller = 10;
-		public static double min_FlatFee_in_doller = 5;
+		public static double max_FlatFee_in_doller = 12;
+		public static double min_FlatFee_in_doller = 24;
 		
 		public static double setInitialFlatFee(){
 			return Uniform.staticNextDoubleFromTo(min_FlatFee_in_doller, max_FlatFee_in_doller);

@@ -108,7 +108,7 @@ public class Dealer extends Person {
 			}
 			return;
 		}
-		else if(currentTick == Settings.initialPhase + entryTick){
+		else if(currentTick == (Settings.initialPhase + entryTick ) +( Settings.stepsInDay - (Settings.initialPhase + this.entryTick) % Settings.stepsInDay )){
 			Summary summary = initializeMeanAndVariance(itr);
 			summaries.add(summary);
 			return;

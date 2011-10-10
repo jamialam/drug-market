@@ -41,12 +41,12 @@
         <string>PersonID</string>
       </entry>
       <entry>
-        <repast.simphony.data.logging.gather.DefaultTimeDataMapping reference="../../../nameMappingTable/entry/repast.simphony.data.logging.gather.DefaultTimeDataMapping"/>
-        <string>Tick</string>
-      </entry>
-      <entry>
         <repast.simphony.data.logging.gather.MethodMapping reference="../../../nameMappingTable/entry[2]/repast.simphony.data.logging.gather.MethodMapping"/>
         <string>UnitsToSell</string>
+      </entry>
+      <entry>
+        <repast.simphony.data.logging.gather.DefaultTimeDataMapping reference="../../../nameMappingTable/entry/repast.simphony.data.logging.gather.DefaultTimeDataMapping"/>
+        <string>Tick</string>
       </entry>
     </mappingNameTable>
   </dataMappingContainer>
@@ -65,12 +65,12 @@
     </nameMappingTable>
     <mappingNameTable>
       <entry>
-        <repast.simphony.data.logging.gather.aggregate.CountMapping reference="../../../nameMappingTable/entry[2]/repast.simphony.data.logging.gather.aggregate.CountMapping"/>
-        <string>Num of Dealer</string>
-      </entry>
-      <entry>
         <repast.simphony.data.logging.gather.DefaultTimeDataMapping reference="../../../nameMappingTable/entry/repast.simphony.data.logging.gather.DefaultTimeDataMapping"/>
         <string>Tick</string>
+      </entry>
+      <entry>
+        <repast.simphony.data.logging.gather.aggregate.CountMapping reference="../../../nameMappingTable/entry[2]/repast.simphony.data.logging.gather.aggregate.CountMapping"/>
+        <string>Num of Dealer</string>
       </entry>
     </mappingNameTable>
     <alternatedNameTable/>

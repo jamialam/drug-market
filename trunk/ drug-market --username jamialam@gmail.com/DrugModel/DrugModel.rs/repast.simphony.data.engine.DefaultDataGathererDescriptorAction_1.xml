@@ -28,14 +28,14 @@
         </repast.simphony.data.logging.gather.aggregate.SumMapping>
       </entry>
       <entry>
-        <string>Tick</string>
-        <repast.simphony.data.logging.gather.DefaultTimeDataMapping/>
-      </entry>
-      <entry>
         <string>Num of Customer</string>
         <repast.simphony.data.logging.gather.aggregate.CountMapping>
           <type>Count</type>
         </repast.simphony.data.logging.gather.aggregate.CountMapping>
+      </entry>
+      <entry>
+        <string>Tick</string>
+        <repast.simphony.data.logging.gather.DefaultTimeDataMapping/>
       </entry>
       <entry>
         <string>Total Money Spend in System</string>
@@ -53,20 +53,20 @@
     </nameMappingTable>
     <mappingNameTable>
       <entry>
-        <repast.simphony.data.logging.gather.DefaultTimeDataMapping reference="../../../nameMappingTable/entry[2]/repast.simphony.data.logging.gather.DefaultTimeDataMapping"/>
-        <string>Tick</string>
-      </entry>
-      <entry>
-        <repast.simphony.data.logging.gather.aggregate.CountMapping reference="../../../nameMappingTable/entry[3]/repast.simphony.data.logging.gather.aggregate.CountMapping"/>
-        <string>Num of Customer</string>
+        <repast.simphony.data.logging.gather.aggregate.SumMapping reference="../../../nameMappingTable/entry[4]/repast.simphony.data.logging.gather.aggregate.SumMapping"/>
+        <string>Total Money Spend in System</string>
       </entry>
       <entry>
         <repast.simphony.data.logging.gather.aggregate.SumMapping reference="../../../nameMappingTable/entry/repast.simphony.data.logging.gather.aggregate.SumMapping"/>
         <string>Total Tax Paid in System</string>
       </entry>
       <entry>
-        <repast.simphony.data.logging.gather.aggregate.SumMapping reference="../../../nameMappingTable/entry[4]/repast.simphony.data.logging.gather.aggregate.SumMapping"/>
-        <string>Total Money Spend in System</string>
+        <repast.simphony.data.logging.gather.aggregate.CountMapping reference="../../../nameMappingTable/entry[2]/repast.simphony.data.logging.gather.aggregate.CountMapping"/>
+        <string>Num of Customer</string>
+      </entry>
+      <entry>
+        <repast.simphony.data.logging.gather.DefaultTimeDataMapping reference="../../../nameMappingTable/entry[3]/repast.simphony.data.logging.gather.DefaultTimeDataMapping"/>
+        <string>Tick</string>
       </entry>
     </mappingNameTable>
     <alternatedNameTable/>

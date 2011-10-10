@@ -30,7 +30,7 @@
       <seriesID>Total Tax Paid in System</seriesID>
       <valueColumn>Total Tax Paid in System</valueColumn>
       <hashCode>-243982669</hashCode>
-      <proxy>false</proxy>
+      <proxy>true</proxy>
     </repast.simphony.chart.Series>
   </series>
 </repast.simphony.chart.engine.DefaultXYChartOutputterDescriptor>

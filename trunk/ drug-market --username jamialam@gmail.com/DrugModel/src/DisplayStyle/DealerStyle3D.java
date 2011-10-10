@@ -20,6 +20,10 @@ public class DealerStyle3D extends DefaultStyle3D<Person>{
 			return( "" + (float)((Dealer)o).getSalesToday());
 		return null;
 	}
+	public Color getLabelColor(Person t, Color currentColor) {
+	    return Color.WHITE; 
+	  }
+
 	public TaggedAppearance getAppearance(Person t, TaggedAppearance taggedAppearance, Object shapeID) {
 		if (taggedAppearance == null || taggedAppearance.getTag() == null) {
 			taggedAppearance = new TaggedAppearance("DEFAULT");

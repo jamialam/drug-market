@@ -12,8 +12,8 @@ public class Settings {
 	public static final String transactionnetwork = "transactionnetwork";
 	public static final String socialnetwork = "socialnetwork";
 
-	public static int initCustomers = 25;
-	public static int initDealers = 5;
+	public static int initCustomers = 500;
+	public static int initDealers = 100;
 //	public static int initCustomers = 30;
 //	public static int initDealers = 4;
 	//public static int maxCoordinate = 1000;
@@ -29,7 +29,7 @@ public class Settings {
 	public static final double stepsInDay = (hoursInDay*60)/step;
 	//	//in minutes
 	//	public static final double consumptionTimePerGram = 8*60;
-	public static final double numDaysInitialPhase = 5;
+	public static final double numDaysInitialPhase = 15;
 	/** Initial period. In time steps (days) */
 	public static final double initialPhase = numDaysInitialPhase*stepsInDay;
 	/** We assume this to remain constant for now. */
@@ -51,7 +51,7 @@ public class Settings {
 		public static final double TimeToLeaveMarket = TimeToLeaveMarketInDays * stepsInDay;
 		public static final double surplusLimit = 14 * unitsPerGram;
 		public static final double newDealerInterval = 1 * stepsInDay;
-		public static final double maxDealsLimit = 10;
+		public static final double maxDealsLimit = 30;
 		public static final double dealerSelectionProb = 0.5;
 		
 	}

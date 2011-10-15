@@ -5,6 +5,7 @@ import individual.Person;
 
 import java.awt.Color;
 
+import drugmodel.ContextCreator;
 import drugmodel.Settings;
 import drugmodel.Settings.DealerType;
 
@@ -16,7 +17,7 @@ import repast.simphony.visualization.visualization3D.style.TaggedAppearance;
 public class AgentStyle3D extends DefaultStyle3D<Person>{
 	  public String getLabel(Person o, String currentLabel) {
 		 	if(o instanceof Dealer)
-		  		return( "" + (float)((Dealer)o).getSale());
+		  		return( "" + (float)((Dealer)o).getTotalSales());
 		 	  return null;
 		  }
 	  public TaggedAppearance getAppearance(Person t, TaggedAppearance taggedAppearance, Object shapeID) {
@@ -60,11 +61,11 @@ public class AgentStyle3D extends DefaultStyle3D<Person>{
 	  public float[] getScale(Person o) {
 		  float ratio = (float)Settings.initDealers / (float)Settings.initCustomers;
 		  	if(o instanceof Dealer){
-		  		float size = (float)((Dealer)o).getSale();
+		  		float size = (float)((Dealer)o).getTotalSales();
 		  		if(size == 0.0)
 		  			size = ratio;
 		  		else
-		  			size = (size/(float)1000.0)  * ratio;
+		  			size = (size/(float)ContextCreator.getTickCount())  * 0.05f;//ratio;
 		  		float[] array = {size , size , size };
 		  		return array;
 		  	}

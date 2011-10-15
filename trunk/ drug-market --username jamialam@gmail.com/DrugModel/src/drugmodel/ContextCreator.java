@@ -5,6 +5,7 @@ package drugmodel;
  */
 
 import individual.Customer;
+import individual.DataCollector;
 import individual.Dealer;
 
 import java.awt.GridLayout;
@@ -108,7 +109,7 @@ public class ContextCreator implements ContextBuilder<Object> {
 			System.out.println("network verification sucessfull.");
 	
 		makeControlPanel();
-		
+		context.add(new DataCollector());
 		return context;
 	}
 	public static boolean verifyNetwork(){

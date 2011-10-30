@@ -4,7 +4,7 @@ import drugmodel.Settings;
 import repast.simphony.engine.environment.RunEnvironment;
 
 public class Person extends Object {
-	protected static int lastID = -1;
+	public static int lastID = -1;
 	protected int personID;
 	protected double entryTick; 
 	protected double exitTick;
@@ -27,7 +27,7 @@ public class Person extends Object {
 	
 	public void deductMoney(double amount) {
 		if (Settings.errorLog && amount > money) {
-			System.out.println("Amount: " + amount + " to be deducted is larger than money: " + money + ". Seting money zero.");
+			System.err.println("Amount: " + amount + " to be deducted is larger than money: " + money + ". Seting money zero.");
 			money = 0d;
 		}
 		else {

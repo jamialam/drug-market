@@ -7,8 +7,11 @@ package drugmodel;
 import individual.Customer;
 import individual.DataCollector;
 import individual.Dealer;
+import individual.Person;
 
 import java.awt.GridLayout;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.swing.JLabel;
@@ -35,26 +38,37 @@ import repast.simphony.ui.RSApplication;
 public class ContextCreator implements ContextBuilder<Object> {
 	private static double currentTick = -1;
 	public static Context<Object> mainContext;
+	public static DataCollector dataCollector = null;
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
+
 	public Context build(Context<Object> context) {
+	
 		context.setId("drugmodel");
 		ContextCreator.mainContext = context;
-		Parameters p = RunEnvironment.getInstance().getParameters();
+		Person.lastID = -1;
+		currentTick = -1;
+		Transaction.lastID = -1;
+		dataCollector = null;
+	
+/*		Parameters p = RunEnvironment.getInstance().getParameters();
 		
 		Settings.initCustomers = (Integer)p.getValue("initcustomerpopulation");
 		Settings.initDealers = (Integer)p.getValue("initdealerpopulation");
-		Settings.DealersParams.surplusLimit = (Integer)p.getValue("surpluslimit");
-		Settings.DealersParams.maxDealsLimit = (Integer)p.getValue("maxdeals");
-	
+		Settings.DealersParams.surplusLimit = ((Integer)p.getValue("surpluslimit")* Settings.unitsPerGram );
+		Settings.DealersParams.maxDealsLimit = ((Integer)p.getValue("maxdeals")*1.0);
+
 		System.out.println("init customer: " +Settings.initCustomers);
 		System.out.println("init dealer: " +Settings.initDealers);
 		System.out.println("surplus limit: " +Settings.DealersParams.surplusLimit);
 		System.out.println("max deals limit: " +Settings.DealersParams.maxDealsLimit);
-		/*		GeographyParameters<Object> geoparams = new GeographyParameters<Object>();
+		*/
+		
+/*		GeographyParameters<Object> geoparams = new GeographyParameters<Object>();
 		GeographyFactory factory = GeographyFactoryFinder.createGeographyFactory(null);
 		Geography neighbourhood = factory.createGeography("city", context, geoparams);
-		GeometryFactory fac = new GeometryFactory();*/ 
+		GeometryFactory fac = new GeometryFactory();
+*/ 
 
 		// We first create customers 
 		for (int i=0; i<Settings.initCustomers; i++) {
@@ -87,6 +101,7 @@ public class ContextCreator implements ContextBuilder<Object> {
 
 		//Now assign to each customer, some dealers from a range of [minDealers, maxDealers] (default:[1,3]) 
 		Iterator custItr = context.getObjects(Customer.class).iterator();
+		ArrayList<Transaction> deals = new ArrayList<Transaction>(); 
 		while(custItr.hasNext()) {
 			Customer customer = (Customer) custItr.next(); 
 			do {
@@ -95,7 +110,8 @@ public class ContextCreator implements ContextBuilder<Object> {
 					//new code added 
 					TransactionEdge edge = new TransactionEdge(customer, dealer, false);
 					// WARNING: explicitly setting time to 1
-					Transaction transaction = new Transaction(dealer, customer.getPersonID(), (int) -1 ,(Settings.pricePerGram / Settings.unitsPerGram ) , Settings.unitsPerGram,Endorsement.None);
+					Transaction transaction = new Transaction(dealer, customer.getPersonID(), (int) -1 ,(Settings.pricePerGram / Settings.unitsPerGram ) , Settings.unitsPerGram,Endorsement.None, -1, -1);
+					deals.add(transaction);
 					edge.addTransaction(transaction);
 					transactionnetwork.addEdge(edge);
 					
@@ -107,26 +123,27 @@ public class ContextCreator implements ContextBuilder<Object> {
 			}
 
 		}
-
-		ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
-		///////////////////////////////WHY priority is 10??
-		ScheduleParameters params = ScheduleParameters.createRepeating(1,1,10);
-		schedule.schedule(params, this, "updateTickCount");
-
-		// If running in batch mode, schedule the simulation to stop time
-		if(RunEnvironment.getInstance().isBatch()){
-			RunEnvironment.getInstance().endAt(Settings.endTime);		
-		}				
 		if(verifyNetwork())
 			System.out.println("network verification sucessfull.");
 	
 		if(RunEnvironment.getInstance().isBatch() == false)
 			makeControlPanel();
-		context.add(new DataCollector());
-		
+
 		if(RunEnvironment.getInstance().isBatch()){
 			RunEnvironment.getInstance().endAt(Settings.endTime);		
 		}
+/*
+		dataCollector = new DataCollector(deals);
+		context.add(dataCollector);
+*/	
+		ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
+		///////////////////////////////WHY priority is 10??
+		ScheduleParameters params = ScheduleParameters.createRepeating(1,1,10);
+		schedule.schedule(params, this, "updateTickCount");
+
+/*		ScheduleParameters params1 = ScheduleParameters.createAtEnd(1);
+		schedule.schedule(params1, this, "writeGraph");
+*/		
 		
 		return context;
 	}
@@ -167,8 +184,18 @@ public class ContextCreator implements ContextBuilder<Object> {
 
 	public void updateTickCount() {
 		currentTick = RunEnvironment.getInstance().getCurrentSchedule().getTickCount();
+		if(currentTick % 25000 == 0  )
+			System.gc();
 	}
-
+	public void writeGraph(){
+		try {
+			dataCollector.save();
+			dataCollector.saveInPajek();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	public static double getTickCount() {
 		return currentTick;
 	}

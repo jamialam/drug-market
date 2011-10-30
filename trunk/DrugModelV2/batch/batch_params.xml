@@ -5,8 +5,8 @@
 	<parameter name="initdealerpopulation" 		type="constant" constant_type="number"	value= "100"/>
 	<parameter name="networktype" 				type="constant" constant_type="string"	value="WattsSmallWorld"/> 
 
-		<parameter name="surpluslimit" type="list" value_type="int" values="8 9 10 11 12 13 14 15 16 17 18 20">
-			<parameter name="maxdeals" type="list" value_type="int" values="15 20 25 30 35 40 45"/>
+		<parameter name="surpluslimit" type="list" value_type="int" values="12 14 16">
+			<parameter name="maxdeals" type="list" value_type="int" values="25 30 35"/>
 		</parameter>		
 
 </sweep>

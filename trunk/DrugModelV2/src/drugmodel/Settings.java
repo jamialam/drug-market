@@ -17,7 +17,7 @@ public class Settings {
 //	public static int initCustomers = 30;
 //	public static int initDealers = 4;
 	//public static int maxCoordinate = 1000;
-	public static double endTime = 100000.0;
+	public static double endTime = 50000.0;
 	public static int minDealerCustomerlinks = 1;
 	public static int maxDealerCustomerlinks = 3;
 	
@@ -50,10 +50,12 @@ public class Settings {
 		public static final double TimeToLeaveMarketInDays = 14d;
 		//This is the one read by the Dealer
 		public static final double TimeToLeaveMarket = TimeToLeaveMarketInDays * stepsInDay;
-		public static int surplusLimit = (int) (14 * unitsPerGram);
+		public static double surplusLimit =  (14 * unitsPerGram);
 		public static final double newDealerInterval = 1 * stepsInDay;
-		public static int maxDealsLimit = 30;
+		public static double maxDealsLimit = 30.0;
 		public static final double dealerSelectionProb = 0.8;
+		public static boolean newDealerType = true;
+		public static double GreedynewDealerProb = 0.5;
 		
 	}
 	public static enum ShareDealMode {ShareWhenAsked, ShareWithoutAsking};

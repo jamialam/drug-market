@@ -1,22 +1,21 @@
 <repast.simphony.data.logging.outputter.engine.DefaultFileOutputterDescriptor>
-  <name>NumOfDealer</name>
+  <name>DealHistory</name>
   <outputterFactory class="repast.simphony.data.logging.outputter.engine.DefaultFileOutputterDescriptor$1">
     <outer-class reference="../.."/>
   </outputterFactory>
   <dataSetHandler>
     <dataSets>
-      <string>Dealer</string>
+      <string>DataCollector</string>
     </dataSets>
   </dataSetHandler>
   <streamHandler>
     <columns>
-      <string>Tick</string>
-      <string>Num of Dealer</string>
+      <string>TransactionHistory</string>
     </columns>
   </streamHandler>
   <isBatchAction>false</isBatchAction>
-  <dataSetId class="string">Dealer</dataSetId>
-  <fileName>C:\Users\Sadaf\workspace\DrugModel\data\NumOfDealers.csv</fileName>
+  <dataSetId class="string">DataCollector</dataSetId>
+  <fileName>data/DealsHistory.csv</fileName>
   <insertTimeToFileName>true</insertTimeToFileName>
   <insertBatchToFileName>true</insertBatchToFileName>
   <insertRunToFileName>true</insertRunToFileName>

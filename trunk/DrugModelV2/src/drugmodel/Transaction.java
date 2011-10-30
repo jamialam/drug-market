@@ -4,7 +4,7 @@ import individual.Dealer;
 import drugmodel.Settings.Endorsement;
 
 public class Transaction {
-	private static int lastID = -1;
+	public static int lastID = -1;
 	private int ID;
 	private Dealer dealer;
 	private int customerID;
@@ -13,7 +13,9 @@ public class Transaction {
 	private Double drugQtyInUnits;
 	private Endorsement endorsement;
 	private double taxAmount; 
-
+	private int dealUsed;
+	private int whoseDealUsed;
+	
 	public Transaction() {
 		ID = ++lastID;
 		time = -1;
@@ -21,15 +23,18 @@ public class Transaction {
 		drugQtyInUnits = 0d;
 		endorsement = Endorsement.None;
 		taxAmount = 0.0d;
+		dealUsed = -1;
+		whoseDealUsed = -1;
+//		System.out.println("new transcation: " + ID);
+
 	}
 	
 	public int getID() {
 		return ID;
 	}
 
-	public Transaction(Dealer _dealer, int _customerID, Integer _time, double _drugCost, double _drugQty, Endorsement _endorsement) {
+	public Transaction(Dealer _dealer, int _customerID, Integer _time, double _drugCost, double _drugQty, Endorsement _endorsement, int deal_used, int whose_deal_used) {
 		ID = ++lastID;
-		//dealerID = _dealerID;
 		dealer = _dealer;
 		customerID = _customerID;
 		if(_time == -1)
@@ -39,6 +44,10 @@ public class Transaction {
 		drugQtyInUnits = _drugQty;
 		endorsement = _endorsement;
 		taxAmount = 0.0d;
+		dealUsed = deal_used;
+		whoseDealUsed = whose_deal_used;
+	//	System.out.println("new transcation: " + ID);
+
 	}
 	
 	public Transaction(Transaction transaction) {
@@ -50,8 +59,12 @@ public class Transaction {
 		drugQtyInUnits = transaction.getDrugQtyInUnits();
 		endorsement = transaction.getEndorsement();
 		taxAmount = transaction.getTaxAmount();
+		dealUsed = transaction.getDealUsed();
+		whoseDealUsed = transaction.getWhoseDealUsed();
 		if(time == -1)
 			System.out.println("TIME2 -1");
+
+//		System.out.println("new transcation: " + ID);
 
 	}
 
@@ -113,5 +126,17 @@ public class Transaction {
 
 	public void setDealer(Dealer dealer) {
 		this.dealer = dealer;
+	}
+
+	public int getDealUsed() {
+		return dealUsed;
+	}
+
+	public int getWhoseDealUsed() {
+		return whoseDealUsed;
+	}
+
+	public static int getLastID() {
+		return lastID;
 	}
 }

@@ -40,6 +40,7 @@ public class Customer extends Person {
 	private double drugToBeConsumedPreviously; 
 	private int evaluationInterval;
 	private int maxLinks;
+	private int curLinks ;
 	protected HashMap<Integer, Double> droppedLinks;
 
 	// for charts and display
@@ -68,6 +69,7 @@ public class Customer extends Person {
 		this.drugToBeConsumedPreviously = 0.0;
 		this.evaluationInterval = Uniform.staticNextIntFromTo(1,Settings.CustomerParams.CustomerConnectionEvaluationInterval);
 		this.maxLinks = 0;
+		this.curLinks = 0; 
 		droppedLinks = new HashMap<Integer, Double>();
 		this.totalTaxPaid = 0.0;
 		this.totalMoneySpend = 0.0;
@@ -77,7 +79,9 @@ public class Customer extends Person {
 	public void initMaxLink() {
 		Network socialNetwork = (Network)(context.getProjection(Settings.socialnetwork));
 		maxLinks = socialNetwork.getInDegree(this);
-		System.out.println("personID: " + this.personID +  "  maxLinks: " +maxLinks);
+		curLinks = maxLinks;
+//		System.out.println("personID: " + this.personID +  "  maxLinks: " +maxLinks);
+		
 	}
 	/**
 	 * Agents have unlimited resources to buy drugs and the model only keeps track of how much they spend and use (in units). (Automatic)
@@ -119,7 +123,7 @@ public class Customer extends Person {
 
 			Network socialNetwork = (Network)(context.getProjection(Settings.socialnetwork));
 			if(socialNetwork.getInDegree(this) < this.maxLinks ){ 
-				Iterator itr_customers = context.getRandomObjects(Customer.class,3 ).iterator();
+				Iterator itr_customers = context.getRandomObjects(Customer.class,31 ).iterator();
 				while( itr_customers.hasNext() ){
 					Customer customer = (Customer) itr_customers.next();
 					if(socialNetwork.getInDegree(customer) < customer.getMaxLinks()   
@@ -134,7 +138,9 @@ public class Customer extends Person {
 						if(socialNetwork.isPredecessor(this, customer) == false
 								|| socialNetwork.isSuccessor(this,customer) == false)
 							System.err.println("edge not created properly.");
-		
+						else
+							curLinks++;
+						
 //						System.out.println("link made b/w "+this.personID + "  and  " + customer.personID +  "  at time: " + ContextCreator.getTickCount() /48);
 						break;
 					}
@@ -200,6 +206,7 @@ public class Customer extends Person {
 					droppedLinks.put((Integer)customer.personID,(Double) ContextCreator.getTickCount());
 					customer.droppedLinks.put((Integer)this.personID,(Double) ContextCreator.getTickCount());
 //					System.out.println("this:" + this.getPersonID() + " drops " + customer.getPersonID() + "  at time: " + ContextCreator.getTickCount() / 48);
+					curLinks--;
 				}
 			}
 			for (SNEdge edge : removedLinks) {
@@ -282,24 +289,29 @@ public class Customer extends Person {
 				return false;
 			}
 		}		 
-
+		
 		int currentTick = (int) ContextCreator.getTickCount();
 	//	System.out.println("buy drug : " + currentTick);
 		double unitsPurchased = dealer.returnUnitsToSell();
 		double costPerUnit = dealer.returnCostPerUnit();		
 		Endorsement endorsement = Endorsement.None;
-
+		
 		if (deal != null
 				&& deal.getCustomerID() != this.personID) {
 			endorsement = unitsPurchased >= deal.getDrugQtyInUnits() ? Endorsement.Good : Endorsement.Bad;
 			updateEndorsement(deal , deal.getCustomerID() , endorsement );
+		
 		}
 		//It is my own dealer and there wasn't a deal information used. 
 		else if (lastTransaction != null) {
-			endorsement = unitsPurchased >= lastTransaction.getDrugQtyInUnits() ? Endorsement.Good : Endorsement.Bad;
+			//endorsement = unitsPurchased >= lastTransaction.getDrugQtyInUnits() ? Endorsement.Good : Endorsement.Bad;
+			endorsement = unitsPurchased >= deal.getDrugQtyInUnits() ? Endorsement.Good : Endorsement.Bad;
 		}
 
-		Transaction transaction = new Transaction(dealer, personID, currentTick, costPerUnit, unitsPurchased, endorsement);
+		Transaction transaction = new Transaction(dealer, personID, currentTick, costPerUnit, unitsPurchased, endorsement, deal.getID(),deal.getCustomerID());
+		
+//		System.out.println("Deal used:" + deal.getID() +"  whose deal it was: " + deal.getCustomerID() +" who was the dealer: " + deal.getDealer().getParentID()  + " new transcation done: " + transaction.getID());
+
 		if(	dealer.sellDrug(transaction) == true ){ 
 			buyDrug(transaction);
 
@@ -315,6 +327,7 @@ public class Customer extends Person {
 
 			edge.addTransaction(transaction);
 			this.lastTransaction = transaction;		
+	//		System.out.println("Deal used:" + deal.getID() +"  whose deal it was: " + deal.getCustomerID() +" who was the dealer: " + deal.getDealer().getPersonID()  + " this person: " + this.personID+" new transcation done: " + transaction.getID());
 
 			//Now pay tax or commission
 			if (deal != null &&  deal.getCustomerID() != this.personID) {
@@ -424,6 +437,7 @@ public class Customer extends Person {
 	 *  x% of the good deals are being shared with  network  connections.
 	 */
 	public void share_X_percentDealsWithNetwork() {
+	// IS THERE A NEED FOR A CHECK???
 		if(Settings.CustomerParams.shareDealMode == Settings.ShareDealMode.ShareWhenAsked)
 			return;
 		int currentTick = (int) ContextCreator.getTickCount();
@@ -607,6 +621,7 @@ public class Customer extends Person {
 				}
 			});
 		}	
+		
 		return deals;
 	}	
 
@@ -680,4 +695,17 @@ public class Customer extends Person {
 	public int getMaxLinks() {
 		return maxLinks;
 	}
+
+	public double getDrugToBeConsumedPreviously() {
+		return drugToBeConsumedPreviously;
+	}
+
+	public Transaction getLastTransaction() {
+		return lastTransaction;
+	}
+
+	public int getCurLinks() {
+		return curLinks;
+	}
+
 }

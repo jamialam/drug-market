@@ -48,7 +48,6 @@ public class Dealer extends Person {
 	private double salesToday;
 	private double totalSales;
 
-
 	public Dealer(double... params) {
 		setDrugs(Settings.Resupply.constantDrugsUnits);
 		unitsToSell = Settings.unitsPerGram;
@@ -67,14 +66,14 @@ public class Dealer extends Person {
 			this.entryTick = 0.0;//ContextCreator.getTickCount();
 		else
 			this.entryTick = ContextCreator.getTickCount();
-		
+
 		this.salesPerDay = 0.0;
 		this.salesToday = 0.0;
 		this.salesYesterday = -1.0;
 		this.dealsToday = 0.0;
 		this.dealsYesterday = -1.0;
 		this.totalSales = 0.0 ;
-		
+
 		if(params.length == 0 ){
 			parentID = -1;
 			type = DealerType.old;
@@ -82,11 +81,18 @@ public class Dealer extends Person {
 		else{
 			parentID = (int)params[0];
 			unitsToSell = params[1];
-			if(Math.random() <= 0.5)
-				type = DealerType.Greedy;
+			if (Settings.DealersParams.newDealerType == true)
+			{	
+				if(Math.random() <= Settings.DealersParams.GreedynewDealerProb)
+					type = DealerType.Greedy;
+				else
+					type = DealerType.Planner;
+			}
 			else
-				type = DealerType.Planner;
+				type = DealerType.old;
 		}
+		System.out.println("new Dealer : " + this.personID + " entry tick: " + entryTick +" entry/48 : " +entryTick/48);
+		
 	}
 
 	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.stepsInDay, priority = 5)
@@ -95,108 +101,113 @@ public class Dealer extends Person {
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
 		Iterator itr = transactionNetwork.getEdges(this).iterator();
 		double currentTick = ContextCreator.getTickCount();		
-
+		
+		System.out.println("current tick: " +currentTick  +" day : " + currentTick/48);
+		
 		if(currentTick <  Settings.initialPhase + this.entryTick){
+			System.out.println("D: " + this.personID  +" entry: " + this.entryTick  + "LESS current tick: " +currentTick  +" day : " + currentTick/48);
 			if(this.type == DealerType.Greedy){
 				if( (this.salesYesterday == -1 || this.salesToday > salesYesterday) && unitsToSell > 9 )
 					unitsToSell--;
-
 			}
 			else if(this.type == DealerType.Planner){
 				if( ( this.dealsYesterday == -1 || this.dealsToday > this.dealsYesterday) && unitsToSell < 15)
 					unitsToSell++;
 			}
-			/*			else if(this.type == DealerType.old)
-				unitsToSell = Uniform.staticNextIntFromTo(9, 15);
-			 */
 			return;
 		}
-		else if(currentTick == (Settings.initialPhase + entryTick ) +( Settings.stepsInDay - (Settings.initialPhase + this.entryTick) % Settings.stepsInDay )){
+		//to call it at the start of the day
+		else if(currentTick == (Settings.initialPhase + entryTick ) ){
+//		else if(currentTick == (Settings.initialPhase + entryTick )  +( Settings.stepsInDay - (Settings.initialPhase + this.entryTick) % Settings.stepsInDay )){
+
+			System.out.println("D: " + this.personID  +" entry: " + this.entryTick + " EQUAL current tick: " +currentTick  +" day : " + currentTick/48);
+			System.out.println("(Settings.initialPhase + entryTick ): " + (Settings.initialPhase + entryTick ));
+			double val = (Settings.initialPhase + entryTick )+( Settings.stepsInDay - (Settings.initialPhase + this.entryTick) % Settings.stepsInDay );
+			System.out.println("Jamal: " + val);
 			Summary summary = initializeMeanAndVarianceSA(itr);
 			summaries.add(summary);
 			return;
 		}
-		else if(currentTick > Settings.initialPhase + entryTick){
+		
+		else if(currentTick > Settings.initialPhase + entryTick ){
+			System.out.println("D: " + this.personID  +" entry: " + this.entryTick + " GREATER current tick: " +currentTick  +" day : " + currentTick/48);
+
 			double numSales = 0;
 			double salesInUnits = 0;
 			for (Transaction transaction : lastDayTransactions) {
 				numSales++;
 				salesInUnits += transaction.getDrugQtyInUnits();
 			}			
+
 			int lastIndex = summaries.size()-1;
-			double div = 0;
-			if(numSales != 0)
-				div = salesInUnits/numSales;
+			double diff_new = salesInUnits - summaries.get(lastIndex).meanSalesUnits;
 
-			System.out.println("Dealer: " + personID + " lastDayNumSale: " +numSales  + " lastDaySaleUnit: " + salesInUnits  +  " avgsalesInUnits: " + div);
-			System.out.println("Dealer: " + personID + " meanNumSale: " +summaries.get(lastIndex).meanNumSales  + " meanSaleUnit: " + summaries.get(lastIndex).meanSalesUnits  +  " avgsalesInUnits: " + summaries.get(lastIndex).meanSalesUnits/summaries.get(lastIndex).meanNumSales);
-
-			double diff = div 
-			- (summaries.get(lastIndex).meanSalesUnits/summaries.get(lastIndex).meanNumSales);
-
-			double stdDivNumSales = Math.sqrt(summaries.get(lastIndex).varianceNumSales);
-			double meanNumSales = summaries.get(lastIndex).meanNumSales;
-
-			double stdDivSaleUnits = Math.sqrt(summaries.get(lastIndex).varianceSalesUnits);
-			double meanSaleUnits = summaries.get(lastIndex).meanSalesUnits;
-
-			System.out.println("Dealer: " + personID + " difference: " + diff  +  " unitToSell: " + this.unitsToSell );
-
-			if(numSales < (meanNumSales - 3*stdDivNumSales) ){
-				System.out.println("Dealer: " + this.personID + "  numSales: " +numSales + "  (mean - 3*stdDiv): " + (meanNumSales - 2*stdDivNumSales));
-
-				if (unitsToSell < 15)
-					unitsToSell = unitsToSell + 1;
-				else
-					unitsToSell = Uniform.staticNextIntFromTo(9, 15);
-			}
-			else if(numSales > (meanNumSales + 3*stdDivNumSales) ){ 
-				System.out.println("Dealer: " + this.personID + "  numSales: " +numSales + "  (mean + 3*stdDiv): " + (meanNumSales + 2*stdDivNumSales));
-
-				if(unitsToSell > 9)
-						unitsToSell = unitsToSell - 1;
-					else
-						unitsToSell = Uniform.staticNextIntFromTo(9, 15);
-			}
-			 			
-			/*			if(salesInUnits < (meanSaleUnits - 3*stdDivSaleUnits) ){
-	//			System.out.println("Dealer: " + this.personID + "  salesInUnit: " +numSales + "  (mean - 3*stdDiv): " + (meanNumSales - 2*stdDivNumSales));
-				if (unitsToSell < 15)
-					unitsToSell = unitsToSell + 1;
-				else
-					unitsToSell = Uniform.staticNextIntFromTo(9, 15);
-			}
-			else if(salesInUnits > (meanSaleUnits + 3*stdDivSaleUnits) ){ 
-		//		System.out.println("Dealer: " + this.personID + "  numSales: " +numSales + "  (mean + 3*stdDiv): " + (meanNumSales + 2*stdDivNumSales));
-
-				if(unitsToSell > 9)
-						unitsToSell = unitsToSell - 1;
-					else
-						unitsToSell = Uniform.staticNextIntFromTo(9, 15);
-			}
-
-			 */
-/*			if (diff < -1 ) {
-				if(unitsToSell < 15)
-					unitsToSell = unitsToSell + 1;
-				else
-					unitsToSell = Uniform.staticNextIntFromTo(9, 15);
-			}		 
-			else if (diff > 1 ) {
-				if(unitsToSell > 9)
-					unitsToSell = unitsToSell - 1;
-				else
-					unitsToSell = Uniform.staticNextIntFromTo(9, 15);;
-			}				
-*/
-			//Skipping the case when the difference is zero.					
-
-			//calculate mean and variance for the next day based on today's sales.
-			summaries.add(progressiveSummarySA((int)currentTick, numSales, salesInUnits));
-			System.out.println("Dealer: " + personID + " Settings units to sell: " + this.unitsToSell);
+			//1st impl
+			meanNumSalesFn(numSales );
+			//2nd impl
+//			meanSaleUnitsFn(salesInUnits);
+			// 3rd impl
+//			diffSalesInUnits(salesInUnits);
+			 //calculate mean and variance for the next day based on today's sales.
+			 summaries.add(progressiveSummarySA((int)currentTick, numSales, salesInUnits));
 		}						
 		lastDayTransactions.clear();			
 	}
+
+	public void meanNumSalesFn(double numSales){
+		int lastIndex = summaries.size()-1;
+		double stdDivNumSales = Math.sqrt(summaries.get(lastIndex).varianceNumSales);
+		double meanNumSales = summaries.get(lastIndex).meanNumSales;
+
+		if(numSales < (meanNumSales - 3*stdDivNumSales) ){
+			if (unitsToSell < 15)
+				unitsToSell = unitsToSell + 1;
+			else
+				unitsToSell = Uniform.staticNextIntFromTo(9, 15);
+		}
+		else if(numSales > (meanNumSales + 3*stdDivNumSales) ){ 
+			if(unitsToSell > 9)
+				unitsToSell = unitsToSell - 1;
+			else
+				unitsToSell = Uniform.staticNextIntFromTo(9, 15);
+		}
+	}
+	public void meanSaleUnitsFn(double salesInUnits){
+		int lastIndex = summaries.size()-1;		
+		double stdDivSaleUnits = Math.sqrt(summaries.get(lastIndex).varianceSalesUnits);
+		double meanSaleUnits = summaries.get(lastIndex).meanSalesUnits;
+		
+		 if(salesInUnits < (meanSaleUnits - 3*stdDivSaleUnits) ){
+			 if (unitsToSell < 15)
+				 unitsToSell = unitsToSell + 1;
+			 else
+				 unitsToSell = Uniform.staticNextIntFromTo(9, 15);
+		 }
+		 else if(salesInUnits > (meanSaleUnits + 3*stdDivSaleUnits) ){ 
+			 if(unitsToSell > 9)
+				 unitsToSell = unitsToSell - 1;
+			 else
+				 unitsToSell = Uniform.staticNextIntFromTo(9, 15);
+		 }
+	}
+	public void diffSalesInUnits(double salesInUnits){ 
+		int lastIndex = summaries.size()-1;
+		double diff_new = salesInUnits - summaries.get(lastIndex).meanSalesUnits;
+
+		if (diff_new < -1 ) {
+			if(unitsToSell < 15)
+				unitsToSell = unitsToSell + 1;
+			else
+				unitsToSell = Uniform.staticNextIntFromTo(9, 15);
+		}		 
+		else if (diff_new > 1 ) {
+			if(unitsToSell > 9)
+				unitsToSell = unitsToSell - 1;
+			else
+				unitsToSell = Uniform.staticNextIntFromTo(9, 15);;
+		}				
+	}
+
 	/** Calculate the online variance (REF: http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#On-line_algorithm)*/
 	private Summary progressiveSummarySA(int currentTick, double numSales, double salesInUnits) {
 		Summary summary = new Summary();
@@ -228,7 +239,7 @@ public class Dealer extends Person {
 
 	}
 	private Summary initializeMeanAndVarianceSA(Iterator itr) {
-		int totalDays = (int) (Settings.initialPhase/Settings.stepsInDay) + 1;
+		int totalDays = (int) (Settings.numDaysInitialPhase);
 		double totalNumSales = 0;
 		double totalUnitsSold = 0;
 		double sumSqUnits = 0;
@@ -361,7 +372,7 @@ public class Dealer extends Person {
 
 					 currentTick - timeLastTransaction > Settings.DealersParams.TimeToLeaveMarket		) 
 			{
-				System.out.println("tick:"+ ContextCreator.getTickCount()+" Dealer dropping out due to NO customer. :  " + personID);
+	//			System.out.println("tick:"+ ContextCreator.getTickCount()+" Dealer dropping out due to NO customer. :  " + personID);
 				context.remove(this);	
 			}
 		}
@@ -378,7 +389,7 @@ public class Dealer extends Person {
 			Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
 			//check it out.............................
 			int numOfCustomers = transactionNetwork.getDegree(this);
-			System.out.println("tick: "+ ContextCreator.getTickCount()+" Dealer: " + personID + " spliting due to more deals: " + dealsPerDay + "  num of customer: " +numOfCustomers+ "  new Dealer:  " + new_dealer.getPersonID());
+//			System.out.println("tick: "+ ContextCreator.getTickCount()+" Dealer: " + personID + " spliting due to more deals: " + dealsPerDay + "  num of customer: " +numOfCustomers+ "  new Dealer:  " + new_dealer.getPersonID());
 
 			Iterator itr_customers = transactionNetwork.getEdges(this).iterator();
 
@@ -437,10 +448,10 @@ public class Dealer extends Person {
 	 */
 
 	public double returnUnitsToSell() {
-/*		do {
+		/*		do {
 			unitsToSell = (int) Normal.staticNextDouble(12, 3);
 		} while (unitsToSell <= 0);
-*/		
+		 */		
 		if(this.drugs < unitsToSell ){
 			supplyAutomatic();
 		}

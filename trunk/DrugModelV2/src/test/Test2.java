@@ -1,4 +1,4 @@
-package individual;
+package test;
 
 import cern.jet.random.Uniform;
 import drugmodel.Settings;

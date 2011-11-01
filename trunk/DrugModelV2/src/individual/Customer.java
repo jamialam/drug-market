@@ -303,7 +303,7 @@ public class Customer extends Person {
 		
 		}
 		//It is my own dealer and there wasn't a deal information used. 
-		else if (lastTransaction != null) {
+		else if (deal != null && deal.getCustomerID() == this.personID) {
 			//endorsement = unitsPurchased >= lastTransaction.getDrugQtyInUnits() ? Endorsement.Good : Endorsement.Bad;
 			endorsement = unitsPurchased >= deal.getDrugQtyInUnits() ? Endorsement.Good : Endorsement.Bad;
 		}

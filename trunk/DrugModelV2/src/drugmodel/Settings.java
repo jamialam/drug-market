@@ -8,16 +8,14 @@ import cern.jet.random.Normal;
 import cern.jet.random.Uniform;
 
 public class Settings {
-	public static final boolean errorLog = true;
+	public static final boolean errorLog = false;
 	public static final String transactionnetwork = "transactionnetwork";
 	public static final String socialnetwork = "socialnetwork";
 
 	public static int initCustomers = 500;
 	public static int initDealers = 100;
-//	public static int initCustomers = 30;
-//	public static int initDealers = 4;
-	//public static int maxCoordinate = 1000;
 	public static double endTime = 50000.0;
+
 	public static int minDealerCustomerlinks = 1;
 	public static int maxDealerCustomerlinks = 3;
 	
@@ -30,7 +28,7 @@ public class Settings {
 	//	//in minutes
 	//	public static final double consumptionTimePerGram = 8*60;
 	// initial phase should be > 1 && should be one less than the actual initial days.
-	public static final int numDaysInitialPhase = 14;
+	public static final int numDaysInitialPhase = 15;
 	/** Initial period. In time steps (days) */
 	public static final double initialPhase = numDaysInitialPhase*stepsInDay;
 	/** We assume this to remain constant for now. */
@@ -56,8 +54,10 @@ public class Settings {
 		public static final double dealerSelectionProb = 0.8;
 		public static boolean newDealerType = true;
 		public static double GreedynewDealerProb = 0.5;
-		
+		public static final double minUnitsToSell = 9;
+		public static final double maxUnitsToSell = 15;
 	}
+	
 	public static enum ShareDealMode {ShareWhenAsked, ShareWithoutAsking};
 	public static enum ShareDealWay {X_percent_of_netowek, X_percent_of_deals};
 	

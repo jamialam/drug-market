@@ -19,6 +19,7 @@ import repast.simphony.space.graph.RepastPajekEdgeTransformer;
 import repast.simphony.space.graph.RepastPajekVertexTransformer;
 
 import drugmodel.DealEdgeTransformer;
+import drugmodel.Settings;
 import drugmodel.Settings.Endorsement;
 import drugmodel.Transaction;
 import edu.uci.ics.jung.graph.DelegateForest;
@@ -129,10 +130,13 @@ public class DataCollector {
 		for (Transaction e : d_set) {
 			int source_id = verticesP.get(e.getDealUsed());
 			int target_id = verticesP.get(e.getID()); 
+			double time = ((double)(e.getTime())) / (double ) Settings.stepsInDay;
+			int	day = (int) Math.ceil(time); 
+	
 			if(e.getWhoseDealUsed() == e.getCustomerID() )
-				writer.write(source_id + " " + target_id + " " + e.getTime() + " c Black" );
+				writer.write(source_id + " " + target_id + " " + day + " c Black" );
 			else
-				writer.write(source_id + " " + target_id + " " + e.getTime() + " c Green" );
+				writer.write(source_id + " " + target_id + " " + day + " c Green" );
 
 			writer.newLine();				
 		}

@@ -37,7 +37,7 @@ public class Transaction {
 		ID = ++lastID;
 		dealer = _dealer;
 		customerID = _customerID;
-		if(_time == -1)
+		if( Settings.errorLog && _time == -1)
 			System.out.println("TIME -1");
 		time = _time;
 		costPerUnit = _drugCost;

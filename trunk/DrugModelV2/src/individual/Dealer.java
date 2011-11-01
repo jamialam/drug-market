@@ -26,7 +26,6 @@ import repast.simphony.util.ContextUtils;
 
 public class Dealer extends Person {
 	private double unitsToSell;
-	private double timeToLeaveMarket;
 	private double lastTimeZeroDrug;
 	private double timeLastTransaction; 
 	private ArrayList<Summary> summaries;
@@ -49,21 +48,18 @@ public class Dealer extends Person {
 	private double totalSales;
 
 	public Dealer(double... params) {
-		setDrugs(Settings.Resupply.constantDrugsUnits);
 		unitsToSell = Settings.unitsPerGram;
-		timeToLeaveMarket = Settings.DealersParams.TimeToLeaveMarket;
 		lastTimeZeroDrug = -1;
 		timeLastTransaction = -1;
 		summaries = new ArrayList<Summary>();
 		lastDayTransactions = new ArrayList<Transaction>();
-		// added by sa on 10/9/2011
 		this.drugs = Settings.Resupply.constantDrugsUnits;
 		this.evaluationInterval = Uniform.staticNextIntFromTo(1, (int)Settings.DealersParams.TimeToLeaveMarket);
 		this.surplus = 0.0;
 		dealsPerDay = 0.0;
 
 		if(ContextCreator.getTickCount() == -1)
-			this.entryTick = 0.0;//ContextCreator.getTickCount();
+			this.entryTick = 0.0;
 		else
 			this.entryTick = ContextCreator.getTickCount();
 
@@ -81,8 +77,7 @@ public class Dealer extends Person {
 		else{
 			parentID = (int)params[0];
 			unitsToSell = params[1];
-			if (Settings.DealersParams.newDealerType == true)
-			{	
+			if (Settings.DealersParams.newDealerType == true)	{	
 				if(Math.random() <= Settings.DealersParams.GreedynewDealerProb)
 					type = DealerType.Greedy;
 				else
@@ -91,34 +86,34 @@ public class Dealer extends Person {
 			else
 				type = DealerType.old;
 		}
-		System.out.println("new Dealer : " + this.personID + " entry tick: " + entryTick +" entry/48 : " +entryTick/48);
-		
+		if(Settings.errorLog)
+			System.out.println("new Dealer : " + this.personID + " entry tick: " + entryTick +" entry/48 : " +entryTick/48);
 	}
 
-	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.stepsInDay, priority = 5)
+	//	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.stepsInDay, priority = 5)
+	@ScheduledMethod(start = 48, interval = Settings.stepsInDay, priority = 2)
 	public void updatePrice() {
 		Context context = ContextUtils.getContext(this);
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
 		Iterator itr = transactionNetwork.getEdges(this).iterator();
 		double currentTick = ContextCreator.getTickCount();		
-		
-		System.out.println("current tick: " +currentTick  +" day : " + currentTick/48);
-		
+
+		System.out.println("D: " + this.personID  + " current tick: " +currentTick  +" day : " + currentTick/48);
+
 		if(currentTick <  Settings.initialPhase + this.entryTick){
 			System.out.println("D: " + this.personID  +" entry: " + this.entryTick  + "LESS current tick: " +currentTick  +" day : " + currentTick/48);
 			if(this.type == DealerType.Greedy){
-				if( (this.salesYesterday == -1 || this.salesToday > salesYesterday) && unitsToSell > 9 )
+				if( (this.salesYesterday == -1 || this.salesToday > salesYesterday) && unitsToSell > Settings.DealersParams.minUnitsToSell )
 					unitsToSell--;
 			}
 			else if(this.type == DealerType.Planner){
-				if( ( this.dealsYesterday == -1 || this.dealsToday > this.dealsYesterday) && unitsToSell < 15)
+				if( ( this.dealsYesterday == -1 || this.dealsToday > this.dealsYesterday) && unitsToSell < Settings.DealersParams.maxUnitsToSell)
 					unitsToSell++;
 			}
-			return;
 		}
 		//to call it at the start of the day
 		else if(currentTick == (Settings.initialPhase + entryTick ) ){
-//		else if(currentTick == (Settings.initialPhase + entryTick )  +( Settings.stepsInDay - (Settings.initialPhase + this.entryTick) % Settings.stepsInDay )){
+			//		else if(currentTick == (Settings.initialPhase + entryTick )  +( Settings.stepsInDay - (Settings.initialPhase + this.entryTick) % Settings.stepsInDay )){
 
 			System.out.println("D: " + this.personID  +" entry: " + this.entryTick + " EQUAL current tick: " +currentTick  +" day : " + currentTick/48);
 			System.out.println("(Settings.initialPhase + entryTick ): " + (Settings.initialPhase + entryTick ));
@@ -126,31 +121,33 @@ public class Dealer extends Person {
 			System.out.println("Jamal: " + val);
 			Summary summary = initializeMeanAndVarianceSA(itr);
 			summaries.add(summary);
-			return;
 		}
-		
+
 		else if(currentTick > Settings.initialPhase + entryTick ){
 			System.out.println("D: " + this.personID  +" entry: " + this.entryTick + " GREATER current tick: " +currentTick  +" day : " + currentTick/48);
-
 			double numSales = 0;
 			double salesInUnits = 0;
 			for (Transaction transaction : lastDayTransactions) {
 				numSales++;
 				salesInUnits += transaction.getDrugQtyInUnits();
-			}			
-
+				//test code
+				double time = ((double)(transaction.getTime())) / (double ) Settings.stepsInDay;
+				int	day = (int) Math.ceil(time); 
+				System.out.println("D: " + this.personID + " updateprice Transaction time: " + transaction.getTime() + " Transaction day: " + day);
+			}	
+			System.out.println("today Numsales: " +numSales +  " todays salesInUnits: " + salesInUnits );
 			int lastIndex = summaries.size()-1;
 			double diff_new = salesInUnits - summaries.get(lastIndex).meanSalesUnits;
-
 			//1st impl
 			meanNumSalesFn(numSales );
 			//2nd impl
-//			meanSaleUnitsFn(salesInUnits);
+			//			meanSaleUnitsFn(salesInUnits);
 			// 3rd impl
-//			diffSalesInUnits(salesInUnits);
-			 //calculate mean and variance for the next day based on today's sales.
-			 summaries.add(progressiveSummarySA((int)currentTick, numSales, salesInUnits));
-		}						
+			//			diffSalesInUnits(salesInUnits);
+			//calculate mean and variance for the next day based on today's sales.
+			summaries.add(progressiveSummarySA((int)currentTick, numSales, salesInUnits));
+		}
+		System.out.println("clear last day transaction list........");
 		lastDayTransactions.clear();			
 	}
 
@@ -160,51 +157,51 @@ public class Dealer extends Person {
 		double meanNumSales = summaries.get(lastIndex).meanNumSales;
 
 		if(numSales < (meanNumSales - 3*stdDivNumSales) ){
-			if (unitsToSell < 15)
+			if (unitsToSell < Settings.DealersParams.maxUnitsToSell)
 				unitsToSell = unitsToSell + 1;
 			else
-				unitsToSell = Uniform.staticNextIntFromTo(9, 15);
+				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.minUnitsToSell, (int)Settings.DealersParams.maxUnitsToSell);
 		}
 		else if(numSales > (meanNumSales + 3*stdDivNumSales) ){ 
-			if(unitsToSell > 9)
+			if(unitsToSell > Settings.DealersParams.minUnitsToSell)
 				unitsToSell = unitsToSell - 1;
 			else
-				unitsToSell = Uniform.staticNextIntFromTo(9, 15);
+				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.minUnitsToSell, (int)Settings.DealersParams.maxUnitsToSell);
 		}
 	}
 	public void meanSaleUnitsFn(double salesInUnits){
 		int lastIndex = summaries.size()-1;		
 		double stdDivSaleUnits = Math.sqrt(summaries.get(lastIndex).varianceSalesUnits);
 		double meanSaleUnits = summaries.get(lastIndex).meanSalesUnits;
-		
-		 if(salesInUnits < (meanSaleUnits - 3*stdDivSaleUnits) ){
-			 if (unitsToSell < 15)
-				 unitsToSell = unitsToSell + 1;
-			 else
-				 unitsToSell = Uniform.staticNextIntFromTo(9, 15);
-		 }
-		 else if(salesInUnits > (meanSaleUnits + 3*stdDivSaleUnits) ){ 
-			 if(unitsToSell > 9)
-				 unitsToSell = unitsToSell - 1;
-			 else
-				 unitsToSell = Uniform.staticNextIntFromTo(9, 15);
-		 }
+
+		if(salesInUnits < (meanSaleUnits - 3*stdDivSaleUnits) ){
+			if (unitsToSell < Settings.DealersParams.maxUnitsToSell)
+				unitsToSell = unitsToSell + 1;
+			else
+				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.minUnitsToSell, (int)Settings.DealersParams.maxUnitsToSell);
+		}
+		else if(salesInUnits > (meanSaleUnits + 3*stdDivSaleUnits) ){ 
+			if(unitsToSell > Settings.DealersParams.minUnitsToSell)
+				unitsToSell = unitsToSell - 1;
+			else
+				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.minUnitsToSell, (int)Settings.DealersParams.maxUnitsToSell);
+		}
 	}
 	public void diffSalesInUnits(double salesInUnits){ 
 		int lastIndex = summaries.size()-1;
 		double diff_new = salesInUnits - summaries.get(lastIndex).meanSalesUnits;
 
 		if (diff_new < -1 ) {
-			if(unitsToSell < 15)
+			if(unitsToSell < Settings.DealersParams.maxUnitsToSell)
 				unitsToSell = unitsToSell + 1;
 			else
-				unitsToSell = Uniform.staticNextIntFromTo(9, 15);
+				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.minUnitsToSell, (int)Settings.DealersParams.maxUnitsToSell);
 		}		 
 		else if (diff_new > 1 ) {
-			if(unitsToSell > 9)
+			if(unitsToSell > Settings.DealersParams.minUnitsToSell)
 				unitsToSell = unitsToSell - 1;
 			else
-				unitsToSell = Uniform.staticNextIntFromTo(9, 15);;
+				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.minUnitsToSell, (int)Settings.DealersParams.maxUnitsToSell);
 		}				
 	}
 
@@ -239,7 +236,7 @@ public class Dealer extends Person {
 
 	}
 	private Summary initializeMeanAndVarianceSA(Iterator itr) {
-		int totalDays = (int) (Settings.numDaysInitialPhase);
+		int totalDays = (int) (Settings.numDaysInitialPhase) ;//+ 1 ;
 		double totalNumSales = 0;
 		double totalUnitsSold = 0;
 		double sumSqUnits = 0;
@@ -305,19 +302,15 @@ public class Dealer extends Person {
 		if(Math.abs(summary.varianceSalesUnits - varianceSU) > 0.1)
 			System.err.println("VARIANCE salesunits IS NOT CALCULATED CORRECTLY. " +  summary.varianceSalesUnits + " , " +varianceSU);
 
-
-		System.out.println("Dealer: "+ this.personID + " sales:" + strSales + "  sum sq = " + sumSqNumSales);
-		System.out.println("Dealer: "+ this.personID +  " meanNumSales: " + summary.meanNumSales + " meanSalesUnits: " + summary.meanSalesUnits +
+		if(Settings.errorLog){
+			System.out.println("Dealer: "+ this.personID + " sales:" + strSales + "  sum sq = " + sumSqNumSales);
+			System.out.println("Dealer: "+ this.personID +  " meanNumSales: " + summary.meanNumSales + " meanSalesUnits: " + summary.meanSalesUnits +
 				" NumSaleVar: " + summary.varianceNumSales + " SalesUnitVar: " + summary.varianceSalesUnits);
-
+		}
 		return summary;
 	}
 
-	//TODO
-	/*
-	 * make everyone interval tick different
-	 */
-
+	//TODO:make everyone interval tick different
 	@ScheduledMethod(start = 1, interval = 1, priority = 4)
 	public void supply() {
 		double currentTick = ContextCreator.getTickCount();
@@ -334,9 +327,10 @@ public class Dealer extends Person {
 				if(Settings.Resupply.getSupplyOption().equals(SupplyOption.RegularSurplus)){
 					this.surplus = this.drugs;  
 					if(this.surplus > Settings.DealersParams.surplusLimit ){
-						System.out.println("tick:"+ ContextCreator.getTickCount()+ " Dealer dropping out due to surplus :  " + personID);
 						Context context = ContextUtils.getContext(this);
 						context.remove(this);	
+						if(Settings.errorLog)
+							System.out.println("tick:"+ ContextCreator.getTickCount()+ " Dealer dropping out due to surplus :  " + personID);
 					}
 				}
 				this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));		
@@ -358,40 +352,41 @@ public class Dealer extends Person {
 	@ScheduledMethod(start = Settings.DealersParams.TimeToLeaveMarket, interval = 1, priority = 4)
 	public void dropOut() {		
 		double currentTick = ContextCreator.getTickCount();
-
+		//at least spend min time before drop out
 		if(currentTick - entryTick < Settings.DealersParams.TimeToLeaveMarket )
 			return;
-
 		if(ContextCreator.getTickCount() == this.evaluationInterval 
 				||	(ContextCreator.getTickCount() % (Settings.DealersParams.TimeToLeaveMarket) ) == this.evaluationInterval ) {
 			Context context = ContextUtils.getContext(this);
 			if (	(this.timeLastTransaction == -1)
-					/*	&& currentTick - lastTimeZeroDrug >= Settings.DealersParams.TimeToLeaveMarket)
+					/*	&& currentTick - lastTimeZeroDrug >= Settings.DealersParams.TimeToLeaveMarket)*/
 					//no customer
-					 */	||
-
+					 	||
 					 currentTick - timeLastTransaction > Settings.DealersParams.TimeToLeaveMarket		) 
 			{
-	//			System.out.println("tick:"+ ContextCreator.getTickCount()+" Dealer dropping out due to NO customer. :  " + personID);
 				context.remove(this);	
+				if(Settings.errorLog)
+					System.out.println("tick:"+ ContextCreator.getTickCount()+" Dealer dropping out due to NO customer. :  " + personID);
 			}
 		}
 	}
 
-	@ScheduledMethod(start = Settings.stepsInDay, interval = Settings.DealersParams.newDealerInterval, priority = 2)
+	//	@ScheduledMethod(start = Settings.stepsInDay, interval = Settings.DealersParams.newDealerInterval, priority = 2)
+	@ScheduledMethod(start = Settings.stepsInDay, interval = Settings.DealersParams.newDealerInterval, priority = 1)
 	public void newDealer() {		
-
 		if (dealsPerDay > Settings.DealersParams.maxDealsLimit ) 
 		{
 			Dealer new_dealer = new Dealer(this.personID, this.unitsToSell);
 			Context context = ContextUtils.getContext(this);
 			context.add(new_dealer);
 			Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
-			//check it out.............................
-			int numOfCustomers = transactionNetwork.getDegree(this);
-//			System.out.println("tick: "+ ContextCreator.getTickCount()+" Dealer: " + personID + " spliting due to more deals: " + dealsPerDay + "  num of customer: " +numOfCustomers+ "  new Dealer:  " + new_dealer.getPersonID());
 
+			int numOfCustomers = transactionNetwork.getDegree(this);
 			Iterator itr_customers = transactionNetwork.getEdges(this).iterator();
+
+			if(transactionNetwork.getDegree(this) != transactionNetwork.getOutDegree(this) ){
+				System.err.println("transactionNetwork.getDegree(this) != transactionNetwork.getOutDegree(this)");
+			}
 
 			numOfCustomers /= 2;
 			int i=0;
@@ -416,19 +411,21 @@ public class Dealer extends Person {
 				}
 				list.add(edge);
 				TransactionEdge newEdge = new TransactionEdge(new_dealer, customer);
-				//9/28/2011
 				transactionlist = edge.getTransactionList();
 				for(Transaction transaction : transactionlist ){
 					transaction.setDealer(new_dealer);
 				}
 				newEdge.setTransactionList(transactionlist);
-				/////////////
 				transactionNetwork.addEdge(newEdge);
 				i++;
 			}
 			for(TransactionEdge e : list){
 				transactionNetwork.removeEdge(e);
 			}
+			if(Settings.errorLog){
+				System.out.println("tick: "+ ContextCreator.getTickCount()+" Dealer: " + personID + " spliting due to more deals: " + dealsPerDay + "  num of customer: " +numOfCustomers+ "  new Dealer:  " + new_dealer.getPersonID());
+			}
+
 		}
 		this.salesYesterday = this.salesToday;
 		this.salesToday = salesPerDay;
@@ -436,17 +433,12 @@ public class Dealer extends Person {
 		this.dealsToday = this.dealsPerDay;
 		salesPerDay = 0.0;
 		dealsPerDay = 0;
-
 	}
-
-
-
 	/**
 	 * TODO: Replace the Normal function, currently, only for testing purposes 
 	 * and link it  the updatePrice method. 
 	 * @return
 	 */
-
 	public double returnUnitsToSell() {
 		/*		do {
 			unitsToSell = (int) Normal.staticNextDouble(12, 3);
@@ -462,6 +454,7 @@ public class Dealer extends Person {
 		return (Settings.pricePerGram/this.unitsToSell);
 	}
 
+	@SuppressWarnings("unused")
 	public boolean sellDrug(Transaction transaction) {
 		if(this.drugs <= 0.0 && Settings.errorLog){
 			System.err.println("Dealer "+this.personID+ "  cant sell. drug amount is zero. " +ContextCreator.getTickCount());
@@ -474,6 +467,11 @@ public class Dealer extends Person {
 		dealsPerDay++;
 		salesPerDay += transaction.getDrugQtyInUnits();
 		totalSales += salesPerDay;
+		if(Settings.errorLog){
+			double time = ((double)(transaction.getTime())) / (double ) Settings.stepsInDay;
+			int	day = (int) Math.ceil(time); 
+			System.out.println("Dealer "+this.personID+ " sell drug add Transaction time: " + transaction.getTime() + "Transaction day: " + day );
+		}
 		return true;
 	}
 	public void supplyAutomatic() {
@@ -481,24 +479,11 @@ public class Dealer extends Person {
 			this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
 		}
 	}
-
 	public double getSalesYesterday() {
 		return salesYesterday;
 	}
 	public double getSalesToday() {
 		return salesToday;
-	}
-	public double getTimeToLeaveMarket() {
-		return timeToLeaveMarket;
-	}
-	public void setTimeToLeaveMarket(double timeToLeaveMarket) {
-		this.timeToLeaveMarket = timeToLeaveMarket;
-	}
-	public double getLastTimeZeroDrug() {
-		return lastTimeZeroDrug;
-	}
-	public void setLastTimeZeroDrug(double lastTimeZeroDrug) {
-		this.lastTimeZeroDrug = lastTimeZeroDrug;
 	}
 	public double getUnitsToSell() {
 		return unitsToSell;
@@ -506,60 +491,54 @@ public class Dealer extends Person {
 	public void setUnitsToSell(double unitsToSell) {
 		this.unitsToSell = unitsToSell;
 	}
-	public double getTimeLastTransaction() {
-		return timeLastTransaction;
-	}
-	public void setTimeLastTransaction(double timeLastTransaction) {
-		this.timeLastTransaction = timeLastTransaction;
-	}
 	public int getEvaluationInterval() {
-		return evaluationInterval;
-	}
-	public float getSale() {
-		return (float) salesPerDay;
-	}
-	public double getDealsPerDay() {
-		return dealsPerDay;
-	}
-	public int getParentID() {
-		return parentID;
-	}
-	public DealerType getType() {
-		return type;
-	}
-	public double getDealsYesterday() {
-		return dealsYesterday;
-	}
-	public double getDealsToday() {
-		return dealsToday;
-	}
-	public double getSalesPerDay() {
-		return salesPerDay;
-	}
-	protected class Summary {
-		public double meanSalesUnits;
-		public double meanNumSales;
-		public double varianceSalesUnits;
-		public double varianceNumSales;
+		 return evaluationInterval;
+	 }
+	 public float getSale() {
+		 return (float) salesPerDay;
+	 }
+	 public double getDealsPerDay() {
+		 return dealsPerDay;
+	 }
+	 public int getParentID() {
+		 return parentID;
+	 }
+	 public DealerType getType() {
+		 return type;
+	 }
+	 public double getDealsYesterday() {
+		 return dealsYesterday;
+	 }
+	 public double getDealsToday() {
+		 return dealsToday;
+	 }
+	 public double getSalesPerDay() {
+		 return salesPerDay;
+	 }
+	 public double getTotalSales() {
+		 return totalSales;
+	 }
+	 protected class Summary {
+		 public double meanSalesUnits;
+		 public double meanNumSales;
+		 public double varianceSalesUnits;
+		 public double varianceNumSales;
 
-		public double n ;
-		public double meanNumSalesProgressive, meanSalesUnitProgressive;
-		public double M2NumSalesProgressive, M2SalesUnitsProgressive;
+		 public double n ;
+		 public double meanNumSalesProgressive, meanSalesUnitProgressive;
+		 public double M2NumSalesProgressive, M2SalesUnitsProgressive;
 
-		public Summary() {
-			meanSalesUnits = 0;
-			meanNumSales = 0;
-			varianceSalesUnits = 0;
-			varianceNumSales = 0;
+		 public Summary() {
+			 meanSalesUnits = 0;
+			 meanNumSales = 0;
+			 varianceSalesUnits = 0;
+			 varianceNumSales = 0;
 
-			n = 0;
-			M2NumSalesProgressive = 0;
-			M2SalesUnitsProgressive = 0;
-			meanNumSalesProgressive = 0;
-			meanSalesUnitProgressive = 0;
-		}
-	}
-	public double getTotalSales() {
-		return totalSales;
-	}
+			 n = 0;
+			 M2NumSalesProgressive = 0;
+			 M2SalesUnitsProgressive = 0;
+			 meanNumSalesProgressive = 0;
+			 meanSalesUnitProgressive = 0;
+		 }
+	 }
 }

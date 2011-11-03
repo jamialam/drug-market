@@ -65,18 +65,18 @@ public class Generator extends Settings {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static Network returnBarabasiAlbertNetwork(Context context) {
 		double propInitialVertices = 0.01;
-		int initVertices = (int)(Settings.initCustomers*propInitialVertices);
+		int initVertices = (int)(Settings.InitCustomers*propInitialVertices);
 		ContextJungNetwork acquaintanceNetwork = (ContextJungNetwork)NetworkFactoryFinder.createNetworkFactory(null).createNetwork(name, context, directed, new SNEdgeCreator());
 		BarabasiAlbertGen<Person, SNEdge<Person>> generator 
 			= new BarabasiAlbertGen<Person, SNEdge<Person>>(context, initVertices, new HashSet<Person>(), edgesToAttach, directed);
-		generator.evolveGraph((int)(Settings.initCustomers-initVertices));
+		generator.evolveGraph((int)(Settings.InitCustomers-initVertices));
 		acquaintanceNetwork.setGraph(generator.create());
 		return acquaintanceNetwork;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static Network returnKlienbergSmallWorldNetwork(Context context) {
-		int latticeSize = (int)(Math.ceil(Math.sqrt((double)Settings.initCustomers)));
+		int latticeSize = (int)(Math.ceil(Math.sqrt((double)Settings.InitCustomers)));
 		ContextJungNetwork acquaintanceNetwork = (ContextJungNetwork)NetworkFactoryFinder.createNetworkFactory(null).createNetwork(name, context, directed, new SNEdgeCreator());
 		KleinbergSmallWorldGen<Person, SNEdge<Person>> generator 
 			= new KleinbergSmallWorldGen<Person, SNEdge<Person>>(context, latticeSize, clusteringCoefficient, directed);
@@ -89,9 +89,9 @@ public class Generator extends Settings {
 //		long iterations = 100000;
 		long iterations = 1000;
 		ContextJungNetwork acquaintanceNetwork = (ContextJungNetwork)NetworkFactoryFinder.createNetworkFactory(null).createNetwork(name, context, directed, new SNEdgeCreator());
-		double edges = (Settings.initCustomers*degree)/2;
+		double edges = (Settings.InitCustomers*degree)/2;
 		EppsteinPowerLawGen<Person, SNEdge<Person>> generator 	
-			= new EppsteinPowerLawGen<Person, SNEdge<Person>>(context, Settings.initCustomers, (int)edges, iterations, directed); 	
+			= new EppsteinPowerLawGen<Person, SNEdge<Person>>(context, Settings.InitCustomers, (int)edges, iterations, directed); 	
 		acquaintanceNetwork.setGraph(generator.create());
 		return acquaintanceNetwork;
 	}
@@ -108,8 +108,8 @@ public class Generator extends Settings {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static Network returnErdosRenyiRandom(Context context) {
-		double n = (double)(Settings.initCustomers);
-		double edges = (Settings.initCustomers*degree)/2;
+		double n = (double)(Settings.InitCustomers);
+		double edges = (Settings.InitCustomers*degree)/2;
 		double allpos = (n*(n-1))/2;
 		double density = edges/allpos;
 		NetworkGenerator gen = new RandomDensityGenerator(density, selfLoops, symmetrical);	

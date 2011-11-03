@@ -98,7 +98,7 @@ public class Lattice2DGen<V, E> implements GraphGenerator<V, E> {
 	{
 		int vertex_count = row_count * col_count;
 		v_array = new ArrayList<Person>(vertex_count);
-		if (vertex_count != Settings.initCustomers) {
+		if (vertex_count != Settings.InitCustomers) {
 			System.err.println("Error creating Lattice2D grid. Initpopulation not a perfect square.");
 			System.exit(1);
 		}		

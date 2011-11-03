@@ -43,7 +43,7 @@ public class DataCollector {
 		for(Transaction d : inital_deals){
 	//		System.out.println("Adding root: "  + d.getID());
 			DelegateTree<Integer, Transaction> tree = new DelegateTree<Integer, Transaction>();
-			tree.setRoot(new Integer(d.getID()));
+			tree.setRoot(new Integer(d.getTransactionID()));
 			myGraph.addTree(tree);
 
 
@@ -64,9 +64,9 @@ public class DataCollector {
 	public void recordTransaction(individual.Customer customer){
 		Transaction t = customer.getLastTransaction();
 		if(t.getWhoseDealUsed() != t.getCustomerID())
-			myGraph.addEdge(t,t.getDealUsed(),t.getID());
+			myGraph.addEdge(t,t.getDealUsed(),t.getTransactionID());
 		else
-			myGraph.addVertex(t.getID());
+			myGraph.addVertex(t.getTransactionID());
 
 		deals.add(customer.getLastTransaction());
 	//	System.out.println("deal used: " + customer.getLastTransaction().getDealUsed() + " transactionID : "+ customer.getLastTransaction().getID()); 
@@ -129,8 +129,8 @@ public class DataCollector {
 
 		for (Transaction e : d_set) {
 			int source_id = verticesP.get(e.getDealUsed());
-			int target_id = verticesP.get(e.getID()); 
-			double time = ((double)(e.getTime())) / (double ) Settings.stepsInDay;
+			int target_id = verticesP.get(e.getTransactionID()); 
+			double time = ((double)(e.getTime())) / (double ) Settings.StepsInDay;
 			int	day = (int) Math.ceil(time); 
 	
 			if(e.getWhoseDealUsed() == e.getCustomerID() )
@@ -147,7 +147,7 @@ public String getTransactionHistory(){
 	String history = "deal_used , transactionId, thisID , dealerID , endorsement,time \n"; 
 
 	for(Transaction t : deals ){
-		history += t.getDealUsed() +  "," + t.getID() +  ","+ t.getDealer().getPersonID()+","  +t.getCustomerID() +  "," +t.getEndorsement() +  "," + t.getTime() + "\n";
+		history += t.getDealUsed() +  "," + t.getTransactionID() +  ","+ t.getDealer().getPersonID()+","  +t.getCustomerID() +  "," +t.getEndorsement() +  "," + t.getTime() + "\n";
 	}
 	return history;
 }

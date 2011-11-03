@@ -1,9 +1,5 @@
 package drugmodel;
 
-/**
- * @author shah
- */
-
 import individual.Customer;
 import individual.DataCollector;
 import individual.Dealer;
@@ -31,7 +27,6 @@ import repast.simphony.dataLoader.ContextBuilder;
 import repast.simphony.engine.environment.RunEnvironment;
 import repast.simphony.engine.schedule.ISchedule;
 import repast.simphony.engine.schedule.ScheduleParameters;
-import repast.simphony.parameter.Parameters;
 import repast.simphony.space.graph.Network;
 import repast.simphony.ui.RSApplication;
 
@@ -41,18 +36,16 @@ public class ContextCreator implements ContextBuilder<Object> {
 	public static DataCollector dataCollector = null;
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-
-	public Context build(Context<Object> context) {
-	
+	public Context build(Context<Object> context) {	
 		context.setId("drugmodel");
 		ContextCreator.mainContext = context;
 		Person.lastID = -1;
 		currentTick = -1;
 		Transaction.lastID = -1;
 		dataCollector = null;
-	
-/*		Parameters p = RunEnvironment.getInstance().getParameters();
-		
+
+		/*		Parameters p = RunEnvironment.getInstance().getParameters();
+
 		Settings.initCustomers = (Integer)p.getValue("initcustomerpopulation");
 		Settings.initDealers = (Integer)p.getValue("initdealerpopulation");
 		Settings.DealersParams.surplusLimit = ((Integer)p.getValue("surpluslimit")* Settings.unitsPerGram );
@@ -61,182 +54,154 @@ public class ContextCreator implements ContextBuilder<Object> {
 		System.out.println("init customer: " +Settings.initCustomers);
 		System.out.println("init dealer: " +Settings.initDealers);
 		System.out.println("surplus limit: " +Settings.DealersParams.surplusLimit);
-		System.out.println("max deals limit: " +Settings.DealersParams.maxDealsLimit);
-		*/
-		
-/*		GeographyParameters<Object> geoparams = new GeographyParameters<Object>();
-		GeographyFactory factory = GeographyFactoryFinder.createGeographyFactory(null);
-		Geography neighbourhood = factory.createGeography("city", context, geoparams);
-		GeometryFactory fac = new GeometryFactory();
-*/ 
+		System.out.println("max deals limit: " +Settings.DealersParams.maxDealsLimit);*/
 
-		// We first create customers 
-		for (int i=0; i<Settings.initCustomers; i++) {
+		/**  We first create customer agents */ 
+		for (int i=0; i<Settings.InitCustomers; i++) {
 			Customer customer = new Customer(context);
 			context.add(customer);			
-			/*			Coordinate coord = new Coordinate(Uniform.staticNextIntFromTo(0,Settings.maxCoordinate),Uniform.staticNextIntFromTo(0,Settings.maxCoordinate));
-			Point geom = fac.createPoint(coord); 
-			neighbourhood.move(customer, geom);*/ 
 		}
 
-		//First embed all the customer agents in to a network. 
+		/** First embed all the customer agents in to a network. */ 
 		@SuppressWarnings("unused")
 		Network socialnetwork = Generator.returnNetwork(context, Settings.generator_type);
-	/*	Iterator itr = context.getObjects(Customer.class).iterator();
-		while(itr.hasNext()){
-			Customer cus = (Customer) itr.next();
-			System.out.println("personID: " + cus.getPersonID() + "  num of link : " + socialnetwork.getDegree(cus) +"  num of in link : " + socialnetwork.getInDegree(cus) +"  num of out link : " + socialnetwork.getOutDegree(cus)) ;
-		}
-	*/	for (int i=0; i<Settings.initDealers; i++) {
+		
+		/**  Now creating dealer agents */
+		for (int i=0; i<Settings.InitDealers; i++) {
 			Dealer dealer = new Dealer();
 			context.add(dealer);
-			/*			Coordinate coord = new Coordinate(Uniform.staticNextIntFromTo(0,Settings.maxCoordinate),Uniform.staticNextIntFromTo(0,Settings.maxCoordinate));
-			Point geom = fac.createPoint(coord); 
-			neighbourhood.move(dealer, geom);*/
 		}
 
-		//Now generate the customer-dealer network - Unconnected and Undirected.  
+		/** Now generate the customer-dealer network - Unconnected and Undirected. */  
 		Network transactionnetwork = NetworkFactoryFinder.createNetworkFactory(null).createNetwork(
 				Settings.transactionnetwork, context, false, new TransactionEdgeCreator());
 
-		//Now assign to each customer, some dealers from a range of [minDealers, maxDealers] (default:[1,3]) 
+		/** Now assign to each customer, some dealers from a range of [minDealers, maxDealers] (default:[1,3]) */ 
 		Iterator custItr = context.getObjects(Customer.class).iterator();
 		ArrayList<Transaction> deals = new ArrayList<Transaction>(); 
 		while(custItr.hasNext()) {
 			Customer customer = (Customer) custItr.next(); 
 			do {
 				Dealer dealer = (Dealer)(context.getRandomObjects(Dealer.class, 1).iterator().next());
-				if (transactionnetwork.getEdge(customer, dealer) == null) {
-					//new code added 
+				if (transactionnetwork.getEdge(customer, dealer) == null) { 
 					TransactionEdge edge = new TransactionEdge(customer, dealer, false);
-					// WARNING: explicitly setting time to 1
-					Transaction transaction = new Transaction(dealer, customer.getPersonID(), (int) -1 ,(Settings.pricePerGram / Settings.unitsPerGram ) , Settings.unitsPerGram,Endorsement.None, -1, -1);
+					// WARNING: explicitly setting time to -1
+					Transaction transaction = new Transaction(dealer, customer.getPersonID(), 
+							(int) -1 ,(Settings.PricePerGram / Settings.UnitsPerGram ), Settings.UnitsPerGram, 
+							Endorsement.None, -1, -1);
 					deals.add(transaction);
 					edge.addTransaction(transaction);
 					transactionnetwork.addEdge(edge);
-					
 				}
-			} while(transactionnetwork.getDegree(customer) < customer.getInitKnownDealers());
-			if (Settings.errorLog) {
+			} while(transactionnetwork.getDegree(customer) < customer.getInitKnownDealers());			
+			if (Settings.outputLog) {
 				System.out.println("Customer: " + customer.getPersonID() + " has limit: " + customer.getInitKnownDealers()
 						+ " and has degree: " + transactionnetwork.getDegree(customer));
 			}
 
 		}
-		if(verifyNetwork())
-			System.out.println("network verification sucessfull.");
-	
-		if(RunEnvironment.getInstance().isBatch() == false)
-			makeControlPanel();
 
-		if(RunEnvironment.getInstance().isBatch()){
+		/** Network verification*/
+		if(Settings.errorLog) {
+			System.out.println("network verification: " + verifyNetwork());
+		}
+
+		if(RunEnvironment.getInstance().isBatch() == false) {
+			makeControlPanel();
+		}
+		else {
 			RunEnvironment.getInstance().endAt(Settings.endTime);		
 		}
-/*
-		dataCollector = new DataCollector(deals);
-		context.add(dataCollector);
-*/	
+
 		ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
-		///////////////////////////////WHY priority is 10??
+		/* Priority set to 10 to make sure it's always executed first. */
 		ScheduleParameters params = ScheduleParameters.createRepeating(1,1,10);
 		schedule.schedule(params, this, "updateTickCount");
 
-/*		ScheduleParameters params1 = ScheduleParameters.createAtEnd(1);
-		schedule.schedule(params1, this, "writeGraph");
-*/		
-		
+		/*		dataCollector = new DataCollector(deals);
+		context.add(dataCollector);
+		ScheduleParameters params1 = ScheduleParameters.createAtEnd(1);		
+		schedule.schedule(params1, this, "writeGraph");*/				
+
 		return context;
 	}
-	public static boolean verifyNetwork(){
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static boolean verifyNetwork() {
 		Iterator customerItr = mainContext.getObjects(Customer.class).iterator();
 		Network socialNetwork = (Network) (mainContext.getProjection(Settings.socialnetwork));
-		
+
 		Iterator links;
-		Customer _this, link;
+		Customer ego, alter;
 		while(customerItr.hasNext()){
-			_this = (Customer) customerItr.next();
-			links = socialNetwork.getAdjacent(_this).iterator();
+			ego = (Customer) customerItr.next();
+			links = socialNetwork.getAdjacent(ego).iterator();
 			while(links.hasNext()){
-				link = (Customer) links.next();
-				if(!socialNetwork.isPredecessor(_this,link) || !socialNetwork.isSuccessor(_this, link))
+				alter = (Customer) links.next();
+				if(!socialNetwork.isPredecessor(ego,alter) || !socialNetwork.isSuccessor(ego, alter)) {
 					return false;
+				}
 			}
 		}
 		return true;
 	}
-	@SuppressWarnings("rawtypes")
-	public static Dealer getDealer(int dealerID) {
-		Iterator itr = mainContext.getObjects(Dealer.class).iterator();
-		Dealer dealer = null;
-		while (itr.hasNext()) {
-			dealer = (Dealer) itr.next();
-			if (dealer.getPersonID() == dealerID) {
-				break;
-			}
-		}
-		if (Settings.errorLog) {
-			if (dealer == null) {
-				System.err.println("Dealer null. Dealer ID called: " + dealerID); 
-			}
-		}
-		return dealer;
-	}
 
 	public void updateTickCount() {
 		currentTick = RunEnvironment.getInstance().getCurrentSchedule().getTickCount();
-		if(currentTick % 25000 == 0  )
+		if(currentTick % Settings.GarbageTime == 0)
 			System.gc();
 	}
+
 	public void writeGraph(){
 		try {
 			dataCollector.save();
 			dataCollector.saveInPajek();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} catch (IOException e) {e.printStackTrace();}
 	}
+
 	public static double getTickCount() {
 		return currentTick;
 	}
-	private void makeControlPanel()
-	{
-	JPanel jPanel = new JPanel();
-	jPanel.setBorder(new TitledBorder("Parameter Slider Panel"));
-    jPanel.setLayout(new GridLayout(6,2,15,0));//6 rows, 2 cols,
-    JSlider sliderR;
-    sliderR = setSlider(0, 100, 30, 10, 5);                
-    jPanel.add(new JLabel("Share Deal percentage"));        
-    jPanel.add(sliderR); 
-    
-	RSApplication.getRSApplicationInstance().addCustomUserPanel(jPanel);		
-}
-public JSlider setSlider(
+
+	private void makeControlPanel() {
+		JPanel jPanel = new JPanel();
+		jPanel.setBorder(new TitledBorder("Parameter Slider Panel"));
+		jPanel.setLayout(new GridLayout(6,2,15,0));//6 rows, 2 cols,
+		JSlider sliderR;
+		sliderR = setSlider(0, 100, 30, 10, 5);                
+		jPanel.add(new JLabel("Share Deal percentage"));        
+		jPanel.add(sliderR); 
+
+		RSApplication.getRSApplicationInstance().addCustomUserPanel(jPanel);		
+	}
+
+	public JSlider setSlider(
 			int min,  // Slider minimum value
-            int max,  // Slider maximum value
-            int init, // Slider initial value
-            int mjrTkSp, // Major tick spacing
-            int mnrTkSp) // Minor tick spacing
-{
-	JSlider slider;
-	slider = new JSlider(JSlider.HORIZONTAL, min, max, init);
-	slider.setPaintTicks( true );
-	slider.setMajorTickSpacing( mjrTkSp );
-	slider.setMinorTickSpacing( mnrTkSp );
-	slider.setPaintLabels( true );
-	slider.addChangeListener(new SliderListener());
-	return slider;
+			int max,  // Slider maximum value
+			int init, // Slider initial value
+			int mjrTkSp, // Major tick spacing
+			int mnrTkSp) // Minor tick spacing
+	{
+		JSlider slider;
+		slider = new JSlider(JSlider.HORIZONTAL, min, max, init);
+		slider.setPaintTicks( true );
+		slider.setMajorTickSpacing( mjrTkSp );
+		slider.setMinorTickSpacing( mnrTkSp );
+		slider.setPaintLabels( true );
+		slider.addChangeListener(new SliderListener());
+		return slider;
+	}
 }
 
-}
+/* Code not working properly*/ 
 class SliderListener implements ChangeListener {
-    public void stateChanged(ChangeEvent e) {
-        JSlider source = (JSlider)e.getSource();
-        if (!source.getValueIsAdjusting()) {
-            int fps = (int)source.getValue();
-            Settings.CustomerParams.minshareDealProb = (double)fps/100.0;
-            Settings.CustomerParams.maxshareDealProb = (double)fps/100.0;
-            System.out.println(Settings.CustomerParams.maxshareDealProb);
-        }    
-    }
+	public void stateChanged(ChangeEvent e) {
+		/*		JSlider source = (JSlider)e.getSource();
+		if (!source.getValueIsAdjusting()) {
+			int fps = (int)source.getValue();
+			Settings.CustomerParams.MinshareDealProb = (double)fps/100.0;
+			Settings.CustomerParams.MaxshareDealProb = (double)fps/100.0;
+			System.out.println(Settings.CustomerParams.MaxshareDealProb);
+		}*/    
+	}
 }

@@ -28,7 +28,7 @@ public class AgentStyle3D extends DefaultStyle3D<Person>{
 		    if(t instanceof Dealer){
 		    	DealerType type = (DealerType)((Dealer) t).getType();
 				
-		    	if(type == DealerType.old)
+		    	if(type == DealerType.Old)
 					AppearanceFactory.setMaterialAppearance(taggedAppearance.getAppearance(),Color.YELLOW);
 				else if(type == DealerType.Greedy)
 					AppearanceFactory.setMaterialAppearance(taggedAppearance.getAppearance(),Color.GREEN);
@@ -59,7 +59,7 @@ public class AgentStyle3D extends DefaultStyle3D<Person>{
  		  }
 */	 
 	  public float[] getScale(Person o) {
-		  float ratio = (float)Settings.initDealers / (float)Settings.initCustomers;
+		  float ratio = (float)Settings.InitDealers / (float)Settings.InitCustomers;
 		  	if(o instanceof Dealer){
 		  		float size = (float)((Dealer)o).getTotalSales();
 		  		if(size == 0.0)

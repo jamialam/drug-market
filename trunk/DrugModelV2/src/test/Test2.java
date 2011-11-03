@@ -23,7 +23,7 @@ public class Test2 {
 		
 		System.out.println("Printing data: ");
 		
-		double unitspg = Settings.unitsPerGram;
+		double unitspg = Settings.UnitsPerGram;
 		for (int i=0; i<totalDays; i++) {			
 			
 			numSalesUnits[i] = (double) Uniform.staticNextIntFromTo(0, 2) * unitspg;

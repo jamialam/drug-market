@@ -7,8 +7,6 @@ package individual;
 import java.
 util.ArrayList;
 import java.util.Iterator;
-
-import cern.jet.random.Normal;
 import cern.jet.random.Uniform;
 
 import drugmodel.ContextCreator;
@@ -48,7 +46,7 @@ public class Dealer extends Person {
 	private double totalSales;
 
 	public Dealer(double... params) {
-		unitsToSell = Settings.unitsPerGram;
+		unitsToSell = Settings.UnitsPerGram;
 		lastTimeZeroDrug = -1;
 		timeLastTransaction = -1;
 		summaries = new ArrayList<Summary>();
@@ -72,26 +70,26 @@ public class Dealer extends Person {
 
 		if(params.length == 0 ){
 			parentID = -1;
-			type = DealerType.old;
+			type = DealerType.Old;
 		}
 		else{
 			parentID = (int)params[0];
 			unitsToSell = params[1];
-			if (Settings.DealersParams.newDealerType == true)	{	
+			if (Settings.DealersParams.NewDealerType == true)	{	
 				if(Math.random() <= Settings.DealersParams.GreedynewDealerProb)
 					type = DealerType.Greedy;
 				else
 					type = DealerType.Planner;
 			}
 			else
-				type = DealerType.old;
+				type = DealerType.Old;
 		}
 		if(Settings.errorLog)
 			System.out.println("new Dealer : " + this.personID + " entry tick: " + entryTick +" entry/48 : " +entryTick/48);
 	}
 
 	//	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.stepsInDay, priority = 5)
-	@ScheduledMethod(start = 48, interval = Settings.stepsInDay, priority = 2)
+	@ScheduledMethod(start = 48, interval = Settings.StepsInDay, priority = 2)
 	public void updatePrice() {
 		Context context = ContextUtils.getContext(this);
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
@@ -103,11 +101,11 @@ public class Dealer extends Person {
 		if(currentTick <  Settings.initialPhase + this.entryTick){
 			System.out.println("D: " + this.personID  +" entry: " + this.entryTick  + "LESS current tick: " +currentTick  +" day : " + currentTick/48);
 			if(this.type == DealerType.Greedy){
-				if( (this.salesYesterday == -1 || this.salesToday > salesYesterday) && unitsToSell > Settings.DealersParams.minUnitsToSell )
+				if( (this.salesYesterday == -1 || this.salesToday > salesYesterday) && unitsToSell > Settings.DealersParams.MinUnitsToSell )
 					unitsToSell--;
 			}
 			else if(this.type == DealerType.Planner){
-				if( ( this.dealsYesterday == -1 || this.dealsToday > this.dealsYesterday) && unitsToSell < Settings.DealersParams.maxUnitsToSell)
+				if( ( this.dealsYesterday == -1 || this.dealsToday > this.dealsYesterday) && unitsToSell < Settings.DealersParams.MaxUnitsToSell)
 					unitsToSell++;
 			}
 		}
@@ -117,7 +115,7 @@ public class Dealer extends Person {
 
 			System.out.println("D: " + this.personID  +" entry: " + this.entryTick + " EQUAL current tick: " +currentTick  +" day : " + currentTick/48);
 			System.out.println("(Settings.initialPhase + entryTick ): " + (Settings.initialPhase + entryTick ));
-			double val = (Settings.initialPhase + entryTick )+( Settings.stepsInDay - (Settings.initialPhase + this.entryTick) % Settings.stepsInDay );
+			double val = (Settings.initialPhase + entryTick )+( Settings.StepsInDay - (Settings.initialPhase + this.entryTick) % Settings.StepsInDay );
 			System.out.println("Jamal: " + val);
 			Summary summary = initializeMeanAndVarianceSA(itr);
 			summaries.add(summary);
@@ -131,7 +129,7 @@ public class Dealer extends Person {
 				numSales++;
 				salesInUnits += transaction.getDrugQtyInUnits();
 				//test code
-				double time = ((double)(transaction.getTime())) / (double ) Settings.stepsInDay;
+				double time = ((double)(transaction.getTime())) / (double ) Settings.StepsInDay;
 				int	day = (int) Math.ceil(time); 
 				System.out.println("D: " + this.personID + " updateprice Transaction time: " + transaction.getTime() + " Transaction day: " + day);
 			}	
@@ -157,16 +155,16 @@ public class Dealer extends Person {
 		double meanNumSales = summaries.get(lastIndex).meanNumSales;
 
 		if(numSales < (meanNumSales - 3*stdDivNumSales) ){
-			if (unitsToSell < Settings.DealersParams.maxUnitsToSell)
+			if (unitsToSell < Settings.DealersParams.MaxUnitsToSell)
 				unitsToSell = unitsToSell + 1;
 			else
-				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.minUnitsToSell, (int)Settings.DealersParams.maxUnitsToSell);
+				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.MinUnitsToSell, (int)Settings.DealersParams.MaxUnitsToSell);
 		}
 		else if(numSales > (meanNumSales + 3*stdDivNumSales) ){ 
-			if(unitsToSell > Settings.DealersParams.minUnitsToSell)
+			if(unitsToSell > Settings.DealersParams.MinUnitsToSell)
 				unitsToSell = unitsToSell - 1;
 			else
-				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.minUnitsToSell, (int)Settings.DealersParams.maxUnitsToSell);
+				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.MinUnitsToSell, (int)Settings.DealersParams.MaxUnitsToSell);
 		}
 	}
 	public void meanSaleUnitsFn(double salesInUnits){
@@ -175,16 +173,16 @@ public class Dealer extends Person {
 		double meanSaleUnits = summaries.get(lastIndex).meanSalesUnits;
 
 		if(salesInUnits < (meanSaleUnits - 3*stdDivSaleUnits) ){
-			if (unitsToSell < Settings.DealersParams.maxUnitsToSell)
+			if (unitsToSell < Settings.DealersParams.MaxUnitsToSell)
 				unitsToSell = unitsToSell + 1;
 			else
-				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.minUnitsToSell, (int)Settings.DealersParams.maxUnitsToSell);
+				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.MinUnitsToSell, (int)Settings.DealersParams.MaxUnitsToSell);
 		}
 		else if(salesInUnits > (meanSaleUnits + 3*stdDivSaleUnits) ){ 
-			if(unitsToSell > Settings.DealersParams.minUnitsToSell)
+			if(unitsToSell > Settings.DealersParams.MinUnitsToSell)
 				unitsToSell = unitsToSell - 1;
 			else
-				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.minUnitsToSell, (int)Settings.DealersParams.maxUnitsToSell);
+				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.MinUnitsToSell, (int)Settings.DealersParams.MaxUnitsToSell);
 		}
 	}
 	public void diffSalesInUnits(double salesInUnits){ 
@@ -192,16 +190,16 @@ public class Dealer extends Person {
 		double diff_new = salesInUnits - summaries.get(lastIndex).meanSalesUnits;
 
 		if (diff_new < -1 ) {
-			if(unitsToSell < Settings.DealersParams.maxUnitsToSell)
+			if(unitsToSell < Settings.DealersParams.MaxUnitsToSell)
 				unitsToSell = unitsToSell + 1;
 			else
-				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.minUnitsToSell, (int)Settings.DealersParams.maxUnitsToSell);
+				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.MinUnitsToSell, (int)Settings.DealersParams.MaxUnitsToSell);
 		}		 
 		else if (diff_new > 1 ) {
-			if(unitsToSell > Settings.DealersParams.minUnitsToSell)
+			if(unitsToSell > Settings.DealersParams.MinUnitsToSell)
 				unitsToSell = unitsToSell - 1;
 			else
-				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.minUnitsToSell, (int)Settings.DealersParams.maxUnitsToSell);
+				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.MinUnitsToSell, (int)Settings.DealersParams.MaxUnitsToSell);
 		}				
 	}
 
@@ -236,7 +234,7 @@ public class Dealer extends Person {
 
 	}
 	private Summary initializeMeanAndVarianceSA(Iterator itr) {
-		int totalDays = (int) (Settings.numDaysInitialPhase) ;//+ 1 ;
+		int totalDays = (int) (Settings.NumDaysInitialPhase) ;//+ 1 ;
 		double totalNumSales = 0;
 		double totalUnitsSold = 0;
 		double sumSqUnits = 0;
@@ -256,7 +254,7 @@ public class Dealer extends Person {
 			TransactionEdge edge = (TransactionEdge) itr.next();
 			for (Transaction transaction : (ArrayList<Transaction>) edge.getTransactionList()) {
 				if(transaction.getDrugQtyInUnits() > 0.0 && transaction.getTime() > this.entryTick ){
-					double time = ((double)(transaction.getTime() - this.entryTick)) / (double ) Settings.stepsInDay;
+					double time = ((double)(transaction.getTime() - this.entryTick)) / (double ) Settings.StepsInDay;
 					int	day = (int) Math.ceil(time); 
 					num_sales[day-1]++;
 					totalNumSales++;
@@ -317,16 +315,16 @@ public class Dealer extends Person {
 		if (this.drugs <= 0 && lastTimeZeroDrug == -1)  {
 			lastTimeZeroDrug = currentTick;
 		}
-		if (Settings.Resupply.getSupplyOption().equals(SupplyOption.Automatic)) {
+		if (Settings.Resupply.getSupplyOptionForDealer().equals(SupplyOption.Automatic)) {
 			if (this.drugs <  unitsToSell ) {
 				this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
 			}	
 		}
 		else {
-			if ( ( (currentTick - entryTick) % Settings.DealersParams.resupplyInterval) == 0) {
-				if(Settings.Resupply.getSupplyOption().equals(SupplyOption.RegularSurplus)){
+			if ( ( (currentTick - entryTick) % Settings.DealersParams.ResupplyInterval) == 0) {
+				if(Settings.Resupply.getSupplyOptionForDealer().equals(SupplyOption.RegularSurplus)){
 					this.surplus = this.drugs;  
-					if(this.surplus > Settings.DealersParams.surplusLimit ){
+					if(this.surplus > Settings.DealersParams.SurplusLimit ){
 						Context context = ContextUtils.getContext(this);
 						context.remove(this);	
 						if(Settings.errorLog)
@@ -372,9 +370,9 @@ public class Dealer extends Person {
 	}
 
 	//	@ScheduledMethod(start = Settings.stepsInDay, interval = Settings.DealersParams.newDealerInterval, priority = 2)
-	@ScheduledMethod(start = Settings.stepsInDay, interval = Settings.DealersParams.newDealerInterval, priority = 1)
+	@ScheduledMethod(start = Settings.StepsInDay, interval = Settings.DealersParams.NewDealerInterval, priority = 1)
 	public void newDealer() {		
-		if (dealsPerDay > Settings.DealersParams.maxDealsLimit ) 
+		if (dealsPerDay > Settings.DealersParams.MaxDealsLimit ) 
 		{
 			Dealer new_dealer = new Dealer(this.personID, this.unitsToSell);
 			Context context = ContextUtils.getContext(this);
@@ -451,29 +449,29 @@ public class Dealer extends Person {
 	}
 
 	public double returnCostPerUnit() {
-		return (Settings.pricePerGram/this.unitsToSell);
+		return (Settings.PricePerGram/this.unitsToSell);
 	}
 
-	@SuppressWarnings("unused")
 	public boolean sellDrug(Transaction transaction) {
 		if(this.drugs <= 0.0 && Settings.errorLog){
 			System.err.println("Dealer "+this.personID+ "  cant sell. drug amount is zero. " +ContextCreator.getTickCount());
 			return false;
 		}
 		deductDrug(transaction.getDrugQtyInUnits());
-		addMoney(Settings.pricePerGram);
+		addMoney(Settings.PricePerGram);
 		lastDayTransactions.add(transaction);
 		timeLastTransaction = transaction.getTime();
 		dealsPerDay++;
 		salesPerDay += transaction.getDrugQtyInUnits();
 		totalSales += salesPerDay;
 		if(Settings.errorLog){
-			double time = ((double)(transaction.getTime())) / (double ) Settings.stepsInDay;
+			double time = ((double)(transaction.getTime())) / (double ) Settings.StepsInDay;
 			int	day = (int) Math.ceil(time); 
 			System.out.println("Dealer "+this.personID+ " sell drug add Transaction time: " + transaction.getTime() + "Transaction day: " + day );
 		}
 		return true;
 	}
+	
 	public void supplyAutomatic() {
 		if (this.drugs < unitsToSell ) {
 			this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	

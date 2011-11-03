@@ -1,6 +1,5 @@
 package individual;
 
-import drugmodel.Settings;
 import repast.simphony.engine.environment.RunEnvironment;
 
 public class Person extends Object {
@@ -12,7 +11,7 @@ public class Person extends Object {
 	protected double drugs;
 	/** Money available to purchase drugs. */
 	protected double money;
-	
+
 	public Person() {
 		this.personID = ++lastID;
 		entryTick = RunEnvironment.getInstance().getCurrentSchedule().getTickCount();
@@ -20,42 +19,34 @@ public class Person extends Object {
 		money = 0d;
 		drugs = 0d;
 	}
-	
+
 	public void addMoney(double amount) {
 		money += amount;
 	}
-	
+
 	public void deductMoney(double amount) {
-		if (Settings.errorLog && amount > money) {
-			System.err.println("Amount: " + amount + " to be deducted is larger than money: " + money + ". Seting money zero.");
+		money -= amount;		
+		if (money < 0) {
 			money = 0d;
+			System.err.println("Amount: " + amount + " to be deducted is larger than money: " + money + ". Seting money zero.");
 		}
-		else {
-			money -= amount;
-		}			
 	}
-	
+
 	/** Adds drug in grams. */
 	public void addDrug(double amount) {
 		drugs += amount;
 	}
-	
+
 	/** Deduct drug in grams. */
 	public void deductDrug(double amount) {
-		if (Settings.errorLog && amount > drugs) {
-			System.err.println("Amount: " + amount + " to be deducted is larger than drugs: " + drugs + ". Seting drugs zero." 
-					+ (this instanceof  Dealer ? " Dealer" : " Customer") + this.getPersonID());
+		drugs -= amount; 		
+		if (drugs < 0) {
 			drugs = 0d;
-		}
-		else {
-			drugs -= amount;
-		}		
+			System.err.println("Amount: " + amount + " to be deducted is larger than drugs: " + drugs + ". Seting drugs zero." 
+					+ (this instanceof  Dealer ? " Dealer" : " Customer") + this.getPersonID());				
+		}				
 	}
-	
-	/* Currently, all agents are fixed. This will be implemented later on. */
-	public void move() {		
-	}
-		
+
 	public int getPersonID() {
 		return personID;
 	}

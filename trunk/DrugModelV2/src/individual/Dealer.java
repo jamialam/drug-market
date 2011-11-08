@@ -96,7 +96,7 @@ public class Dealer extends Person {
 				dealerType = DealerType.Old;
 			}
 		}
-		
+
 		if(Settings.outputLog) {
 			System.out.println("new Dealer : " + this.personID + " entry tick: " + entryTick +" entry/48 : " +entryTick/48);
 		}
@@ -104,7 +104,7 @@ public class Dealer extends Person {
 
 	/** This method is called at the end of the day.  
 	 * 	It updates the @param unitsToSell for each dealer agent based on the updated selected mechanism.  
-	*/
+	 */
 	@ScheduledMethod(start = Settings.StepsInDay, interval = Settings.StepsInDay, priority = 2)
 	public void updatePrice() {
 		Context context = ContextUtils.getContext(this);
@@ -117,14 +117,14 @@ public class Dealer extends Person {
 		/* Decide units to sell, while still in the initial phase.  
 		 * Updates only if the dealer is new, i.e. Greedy or Planner.
 		 * If the dealer is old, it will sell at the uniform standard price.
-		*/
+		 */
 		if (currentTick < Settings.initialPhase + this.entryTick) {
 			System.out.println("D: " + this.personID  +" entry: " + this.entryTick  + "LESS current tick: " +currentTick  +" day : " + currentTick/48);
 			if(this.dealerType == DealerType.Greedy) {
 				/* A 'greedy' dealer agent wants to sell as many drugs as possible in order to make the most profit.
 				 * The underlying assumption is that there is an unlimited supply available to the dealers so a 
 				 * 'greedy' dealer agent would want to sell its drugs quickly so that it gets further supply. 
-				*/
+				 */
 				if ( (this.salesYesterday == -1 || this.salesToday > salesYesterday)
 						&& unitsToSell > Settings.DealersParams.MinUnitsToSell ) {
 					unitsToSell--;
@@ -134,15 +134,15 @@ public class Dealer extends Person {
 				/* A 'planner' dealer agent is keen in making most connections during its initial phase. 
 				 * It is more interested in the number of deals instead of the amount of drugs sold 
 				 * (as opposed to the 'greedy' agent). 				  
-				*/
+				 */
 				if ( (this.dealsYesterday == -1 || this.dealsToday > this.dealsYesterday) 
 						&& unitsToSell < Settings.DealersParams.MaxUnitsToSell ) {
 					unitsToSell++;
 				}
 			}
-			
+
 		}
-		
+
 		/* If it is at the end of the initial phase. Calculate summaries of the transactions made during the initial phase.*/
 		else if(currentTick == (Settings.initialPhase + entryTick ) ){
 			//		else if(currentTick == (Settings.initialPhase + entryTick )  +( Settings.stepsInDay - (Settings.initialPhase + this.entryTick) % Settings.stepsInDay )){
@@ -483,11 +483,11 @@ public class Dealer extends Person {
 	public double returnCostPerUnit() {
 		return (Settings.PricePerGram/this.unitsToSell);
 	}
-	
+
 	public boolean canSellDrugs() {
 		if (this.drugs <= 0.0) {
 			if(Settings.errorLog){
-				System.err.println("Dealer "+this.personID+ "  cant sell. drug amount is zero. " +ContextCreator.getTickCount());				
+				System.err.println("Dealer "+this.personID+ "  cant sell. drug amount is zero. " + ContextCreator.getTickCount());				
 			}
 			return false;
 		}
@@ -496,7 +496,12 @@ public class Dealer extends Person {
 		}		
 	}
 
-	public boolean sellDrug(Transaction transaction) {		
+	public boolean sellDrug(Transaction transaction) {
+		if (this.drugs <= 0.0 && Settings.errorLog){
+			System.err.println("Dealer "+this.personID+ "  cant sell. drug amount is zero. " + ContextCreator.getTickCount());
+			return false;
+		}
+
 		deductDrug(transaction.getDrugQtyInUnits());
 		addMoney(Settings.PricePerGram);
 		lastDayTransactions.add(transaction);

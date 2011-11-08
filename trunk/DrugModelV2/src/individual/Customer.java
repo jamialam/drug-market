@@ -263,7 +263,7 @@ public class Customer extends Person {
 				for(Transaction transaction : deals){
 					deal = transaction;
 					dealer = transaction.getDealer();
-					if(dealer != null){
+					if(context.contains(dealer) == true) {
 						break;
 					}
 				}
@@ -285,7 +285,7 @@ public class Customer extends Person {
 				for(Transaction transaction : deals){
 					deal = transaction;
 					dealer = transaction.getDealer();
-					if(dealer != null){
+					if(context.contains(dealer) == true) {
 						break;
 					}
 				}

@@ -470,30 +470,27 @@ public class Dealer extends Person {
 	 * @return
 	 */
 	public double returnUnitsToSell() {
-		/*		do {
-			unitsToSell = (int) Normal.staticNextDouble(12, 3);
-		} while (unitsToSell <= 0);
-		 */		
-		if(this.drugs < unitsToSell ){
-			supplyAutomatic();
+		if(this.drugs < unitsToSell){ 
+			return this.drugs;
 		}
 		return unitsToSell;
 	}
-
+	
 	public double returnCostPerUnit() {
 		return (Settings.PricePerGram/this.unitsToSell);
 	}
 
 	public boolean canSellDrugs() {
-		if (this.drugs <= 0.0) {
-			if(Settings.errorLog){
-				System.err.println("Dealer "+this.personID+ "  cant sell. drug amount is zero. " + ContextCreator.getTickCount());				
+		if(this.drugs < unitsToSell){ 
+			if	(Settings.Resupply.getSupplyOptionForDealer().equals(Settings.SupplyOption.Automatic)){
+				supplyAutomatic();
+				return true;
 			}
-			return false;
+			else{
+				return false;
+			}
 		}
-		else {
-			return true;
-		}		
+		return true;
 	}
 
 	public boolean sellDrug(Transaction transaction) {

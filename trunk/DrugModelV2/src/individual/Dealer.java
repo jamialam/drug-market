@@ -303,7 +303,7 @@ public class Dealer extends Person {
 		if(Settings.errorLog){
 			System.out.println("Dealer: "+ this.personID + " sales:" + strSales + "  sum sq = " + sumSqNumSales);
 			System.out.println("Dealer: "+ this.personID +  " meanNumSales: " + summary.meanNumSales + " meanSalesUnits: " + summary.meanSalesUnits +
-				" NumSaleVar: " + summary.varianceNumSales + " SalesUnitVar: " + summary.varianceSalesUnits);
+					" NumSaleVar: " + summary.varianceNumSales + " SalesUnitVar: " + summary.varianceSalesUnits);
 		}
 		return summary;
 	}
@@ -359,8 +359,8 @@ public class Dealer extends Person {
 			if (	(this.timeLastTransaction == -1)
 					/*	&& currentTick - lastTimeZeroDrug >= Settings.DealersParams.TimeToLeaveMarket)*/
 					//no customer
-					 	||
-					 currentTick - timeLastTransaction > Settings.DealersParams.TimeToLeaveMarket		) 
+					||
+					currentTick - timeLastTransaction > Settings.DealersParams.TimeToLeaveMarket		) 
 			{
 				context.remove(this);	
 				if(Settings.errorLog)
@@ -385,7 +385,6 @@ public class Dealer extends Person {
 			if(transactionNetwork.getDegree(this) != transactionNetwork.getOutDegree(this) ){
 				System.err.println("transactionNetwork.getDegree(this) != transactionNetwork.getOutDegree(this)");
 			}
-
 			numOfCustomers /= 2;
 			int i=0;
 			Customer customer = null;
@@ -471,7 +470,7 @@ public class Dealer extends Person {
 		}
 		return true;
 	}
-	
+
 	public void supplyAutomatic() {
 		if (this.drugs < unitsToSell ) {
 			this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
@@ -490,53 +489,53 @@ public class Dealer extends Person {
 		this.unitsToSell = unitsToSell;
 	}
 	public int getEvaluationInterval() {
-		 return evaluationInterval;
-	 }
-	 public float getSale() {
-		 return (float) salesPerDay;
-	 }
-	 public double getDealsPerDay() {
-		 return dealsPerDay;
-	 }
-	 public int getParentID() {
-		 return parentID;
-	 }
-	 public DealerType getType() {
-		 return type;
-	 }
-	 public double getDealsYesterday() {
-		 return dealsYesterday;
-	 }
-	 public double getDealsToday() {
-		 return dealsToday;
-	 }
-	 public double getSalesPerDay() {
-		 return salesPerDay;
-	 }
-	 public double getTotalSales() {
-		 return totalSales;
-	 }
-	 protected class Summary {
-		 public double meanSalesUnits;
-		 public double meanNumSales;
-		 public double varianceSalesUnits;
-		 public double varianceNumSales;
+		return evaluationInterval;
+	}
+	public float getSale() {
+		return (float) salesPerDay;
+	}
+	public double getDealsPerDay() {
+		return dealsPerDay;
+	}
+	public int getParentID() {
+		return parentID;
+	}
+	public DealerType getType() {
+		return type;
+	}
+	public double getDealsYesterday() {
+		return dealsYesterday;
+	}
+	public double getDealsToday() {
+		return dealsToday;
+	}
+	public double getSalesPerDay() {
+		return salesPerDay;
+	}
+	public double getTotalSales() {
+		return totalSales;
+	}
+	protected class Summary {
+		public double meanSalesUnits;
+		public double meanNumSales;
+		public double varianceSalesUnits;
+		public double varianceNumSales;
 
-		 public double n ;
-		 public double meanNumSalesProgressive, meanSalesUnitProgressive;
-		 public double M2NumSalesProgressive, M2SalesUnitsProgressive;
+		public double n ;
+		public double meanNumSalesProgressive, meanSalesUnitProgressive;
+		public double M2NumSalesProgressive, M2SalesUnitsProgressive;
 
-		 public Summary() {
-			 meanSalesUnits = 0;
-			 meanNumSales = 0;
-			 varianceSalesUnits = 0;
-			 varianceNumSales = 0;
+		public Summary() {
+			meanSalesUnits = 0;
+			meanNumSales = 0;
+			varianceSalesUnits = 0;
+			varianceNumSales = 0;
 
-			 n = 0;
-			 M2NumSalesProgressive = 0;
-			 M2SalesUnitsProgressive = 0;
-			 meanNumSalesProgressive = 0;
-			 meanSalesUnitProgressive = 0;
-		 }
-	 }
+			n = 0;
+			M2NumSalesProgressive = 0;
+			M2SalesUnitsProgressive = 0;
+			meanNumSalesProgressive = 0;
+			meanSalesUnitProgressive = 0;
+		}
+	}
 }

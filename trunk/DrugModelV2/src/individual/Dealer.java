@@ -21,75 +21,91 @@ import repast.simphony.space.graph.Network;
 import repast.simphony.util.ContextUtils;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
-
 public class Dealer extends Person {
+	/** Type of the dealer */
+	private DealerType dealerType;
+	/** No. of units that this dealer is selling currently. */
 	private double unitsToSell;
+	/** Last time (in steps) when this dealer has no drugs.*/
 	private double lastTimeZeroDrug;
-	private double timeLastTransaction; 
-	private ArrayList<Summary> summaries;
-	private ArrayList<Transaction> lastDayTransactions;
-	private int evaluationInterval;
-	private double surplus; 
-	private double dealsPerDay;
-
-	//new dealers params
-	private double entryTick;
-	private int parentID;
-	private DealerType type;
+	/** Last time when this dealer sold drugs to a customer agent.*/
+	private double timeLastTransaction;
+	/** Amount of drug that was surplus for this dealer agent. */
+	private double surplus;
+	/** No. of deals made yesterday. */
 	private double dealsYesterday;
+	/** No. of deals made today; calculated at the end of the day. */
 	private double dealsToday;
-
-	// for display
+	/** Interval for this dealer when evaluation was made for resupply and surplus amount. */
+	private int evaluationInterval;
+	/**ID of the parent dealer from this (new dealer) is created. */
+	private int parentID;
+	/** */
+	private double dealsPerDay;
+	/** */	
+	private ArrayList<Summary> summaries;
+	/** */
+	private ArrayList<Transaction> lastDayTransactions;
+	// For display
 	private double salesPerDay;
 	private double salesYesterday;
 	private double salesToday;
 	private double totalSales;
 
 	public Dealer(double... params) {
-		unitsToSell = Settings.UnitsPerGram;
-		lastTimeZeroDrug = -1;
-		timeLastTransaction = -1;
-		summaries = new ArrayList<Summary>();
-		lastDayTransactions = new ArrayList<Transaction>();
+		this.unitsToSell = Settings.UnitsPerGram;
+		this.lastTimeZeroDrug = -1;
+		this.timeLastTransaction = -1;
+		this.summaries = new ArrayList<Summary>();
+		this.lastDayTransactions = new ArrayList<Transaction>();
 		this.drugs = Settings.Resupply.constantDrugsUnits;
 		this.evaluationInterval = Uniform.staticNextIntFromTo(1, (int)Settings.DealersParams.TimeToLeaveMarket);
 		this.surplus = 0.0;
-		dealsPerDay = 0.0;
+		this.dealsPerDay = 0.0;
 
-		if(ContextCreator.getTickCount() == -1)
+		if(ContextCreator.getTickCount() == -1) {
 			this.entryTick = 0.0;
-		else
+		}
+		else {
 			this.entryTick = ContextCreator.getTickCount();
-
+		}
 		this.salesPerDay = 0.0;
 		this.salesToday = 0.0;
 		this.salesYesterday = -1.0;
 		this.dealsToday = 0.0;
-		this.dealsYesterday = -1.0;
-		this.totalSales = 0.0 ;
+		this.salesToday = 0.0;
+		this.totalSales = 0.0;
 
-		if(params.length == 0 ){
+		if(params.length == 0) {
 			parentID = -1;
-			type = DealerType.Old;
+			dealerType = DealerType.Old;
 		}
 		else{
 			parentID = (int)params[0];
 			unitsToSell = params[1];
+			// Check if we want to assign new types to this new dealer. 
 			if (Settings.DealersParams.NewDealerType == true)	{	
-				if(Math.random() <= Settings.DealersParams.GreedynewDealerProb)
-					type = DealerType.Greedy;
-				else
-					type = DealerType.Planner;
+				if(Math.random() <= Settings.DealersParams.GreedynewDealerProb) {
+					dealerType = DealerType.Greedy;
+				}
+				else {
+					dealerType = DealerType.Planner;
+				}
 			}
-			else
-				type = DealerType.Old;
+			else {
+				dealerType = DealerType.Old;
+			}
 		}
-		if(Settings.errorLog)
+		
+		if(Settings.outputLog) {
 			System.out.println("new Dealer : " + this.personID + " entry tick: " + entryTick +" entry/48 : " +entryTick/48);
+		}
 	}
 
-	//	@ScheduledMethod(start = Settings.initialPhase, interval = Settings.stepsInDay, priority = 5)
-	@ScheduledMethod(start = 48, interval = Settings.StepsInDay, priority = 2)
+	/** This method is called at the end of the day.  
+	 * 	It updates the @param unitsToSell for each dealer agent based on the updated selected mechanism.  
+	*/
+	@ScheduledMethod(start = Settings.StepsInDay, interval = Settings.StepsInDay, priority = 2)
 	public void updatePrice() {
 		Context context = ContextUtils.getContext(this);
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
@@ -98,21 +114,38 @@ public class Dealer extends Person {
 
 		System.out.println("D: " + this.personID  + " current tick: " +currentTick  +" day : " + currentTick/48);
 
-		if(currentTick <  Settings.initialPhase + this.entryTick){
+		/* Decide units to sell, while still in the initial phase.  
+		 * Updates only if the dealer is new, i.e. Greedy or Planner.
+		 * If the dealer is old, it will sell at the uniform standard price.
+		*/
+		if (currentTick < Settings.initialPhase + this.entryTick) {
 			System.out.println("D: " + this.personID  +" entry: " + this.entryTick  + "LESS current tick: " +currentTick  +" day : " + currentTick/48);
-			if(this.type == DealerType.Greedy){
-				if( (this.salesYesterday == -1 || this.salesToday > salesYesterday) && unitsToSell > Settings.DealersParams.MinUnitsToSell )
+			if(this.dealerType == DealerType.Greedy) {
+				/* A 'greedy' dealer agent wants to sell as many drugs as possible in order to make the most profit.
+				 * The underlying assumption is that there is an unlimited supply available to the dealers so a 
+				 * 'greedy' dealer agent would want to sell its drugs quickly so that it gets further supply. 
+				*/
+				if ( (this.salesYesterday == -1 || this.salesToday > salesYesterday)
+						&& unitsToSell > Settings.DealersParams.MinUnitsToSell ) {
 					unitsToSell--;
-			}
-			else if(this.type == DealerType.Planner){
-				if( ( this.dealsYesterday == -1 || this.dealsToday > this.dealsYesterday) && unitsToSell < Settings.DealersParams.MaxUnitsToSell)
+				}
+			}			
+			else if (this.dealerType == DealerType.Planner) {
+				/* A 'planner' dealer agent is keen in making most connections during its initial phase. 
+				 * It is more interested in the number of deals instead of the amount of drugs sold 
+				 * (as opposed to the 'greedy' agent). 				  
+				*/
+				if ( (this.dealsYesterday == -1 || this.dealsToday > this.dealsYesterday) 
+						&& unitsToSell < Settings.DealersParams.MaxUnitsToSell ) {
 					unitsToSell++;
+				}
 			}
+			
 		}
-		//to call it at the start of the day
+		
+		/* If it is at the end of the initial phase. Calculate summaries of the transactions made during the initial phase.*/
 		else if(currentTick == (Settings.initialPhase + entryTick ) ){
 			//		else if(currentTick == (Settings.initialPhase + entryTick )  +( Settings.stepsInDay - (Settings.initialPhase + this.entryTick) % Settings.stepsInDay )){
-
 			System.out.println("D: " + this.personID  +" entry: " + this.entryTick + " EQUAL current tick: " +currentTick  +" day : " + currentTick/48);
 			System.out.println("(Settings.initialPhase + entryTick ): " + (Settings.initialPhase + entryTick ));
 			double val = (Settings.initialPhase + entryTick )+( Settings.StepsInDay - (Settings.initialPhase + this.entryTick) % Settings.StepsInDay );
@@ -450,12 +483,20 @@ public class Dealer extends Person {
 	public double returnCostPerUnit() {
 		return (Settings.PricePerGram/this.unitsToSell);
 	}
-
-	public boolean sellDrug(Transaction transaction) {
-		if(this.drugs <= 0.0 && Settings.errorLog){
-			System.err.println("Dealer "+this.personID+ "  cant sell. drug amount is zero. " +ContextCreator.getTickCount());
+	
+	public boolean canSellDrugs() {
+		if (this.drugs <= 0.0) {
+			if(Settings.errorLog){
+				System.err.println("Dealer "+this.personID+ "  cant sell. drug amount is zero. " +ContextCreator.getTickCount());				
+			}
 			return false;
 		}
+		else {
+			return true;
+		}		
+	}
+
+	public boolean sellDrug(Transaction transaction) {		
 		deductDrug(transaction.getDrugQtyInUnits());
 		addMoney(Settings.PricePerGram);
 		lastDayTransactions.add(transaction);
@@ -500,8 +541,8 @@ public class Dealer extends Person {
 	public int getParentID() {
 		return parentID;
 	}
-	public DealerType getType() {
-		return type;
+	public DealerType getDealerType() {
+		return dealerType;
 	}
 	public double getDealsYesterday() {
 		return dealsYesterday;

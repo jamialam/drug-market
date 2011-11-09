@@ -337,11 +337,11 @@ public class Dealer extends Person {
 	public void dropOut() {		
 		double currentTick = ContextCreator.getTickCount();
 		/* At least spend minimum required time before drop out. */
-		if(currentTick - entryTick < Settings.DealersParams.TimeToLeaveMarket ) {
+		if (currentTick - entryTick < Settings.DealersParams.TimeToLeaveMarket) {
 			return;
 		}
 
-		if(currentTick == this.evaluationInterval 
+		if (currentTick == this.evaluationInterval 
 				||	currentTick % Settings.DealersParams.TimeToLeaveMarket == this.evaluationInterval) {
 			if (this.timeLastTransaction == -1 /*  No customer came at all */
 					//&& currentTick - lastTimeZeroDrug >= Settings.DealersParams.TimeToLeaveMarket)
@@ -383,7 +383,6 @@ public class Dealer extends Person {
 		if(transactionNetwork.getDegree(this) != transactionNetwork.getOutDegree(this)){
 			System.err.println(" TransactionNetwork.getDegree(this) != transactionNetwork.getOutDegree(this)");
 		}
-
 		/* Split the parent dealer's number of customers in half. */
 		numCustomers /= 2;
 
@@ -430,7 +429,6 @@ public class Dealer extends Person {
 			System.out.println("tick: "+ ContextCreator.getTickCount()+" Dealer: " + personID + " spliting due to more deals: " + dealsPerDay + "  num of customer: " +numCustomers+ "  new Dealer:  " + newDealer.getPersonID());
 		}
 	}
-
 
 	/**
 	 * Sets salesPerDay, dealsPerDay variables to zero. 

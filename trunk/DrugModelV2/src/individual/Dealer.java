@@ -1,11 +1,6 @@
 package individual;
 
-/**
- * @author shah
- */
-
-import java.
-util.ArrayList;
+import java.util.ArrayList;
 import java.util.Iterator;
 import cern.jet.random.Uniform;
 
@@ -32,25 +27,32 @@ public class Dealer extends Person {
 	private double timeLastTransaction;
 	/** Amount of drug that was surplus for this dealer agent. */
 	private double surplus;
+	
 	/** No. of deals made yesterday. */
 	private double dealsYesterday;
 	/** No. of deals made today; calculated at the end of the day. */
 	private double dealsToday;
+	
 	/** Interval for this dealer when evaluation was made for resupply and surplus amount. */
 	private int evaluationInterval;
 	/**ID of the parent dealer from this (new dealer) is created. */
 	private int parentID;
-	/** */
-	private double dealsPerDay;
 	/** */	
 	private ArrayList<Summary> summaries;
 	/** */
 	private ArrayList<Transaction> lastDayTransactions;
+
+	/** */
+	private double dealsPerDay;
 	// For display
 	private double salesPerDay;
 	private double salesYesterday;
 	private double salesToday;
 	private double totalSales;
+	
+	public static enum UpdatePrice {MeanNumSalesFn, MeanSaleUnitsFn, DiffSalesInUnitsFn};
+	public static final double NumStandardDeviations = 3.0; 
+	private UpdatePrice updatePriceMode;
 
 	public Dealer(double... params) {
 		this.unitsToSell = Settings.UnitsPerGram;
@@ -97,12 +99,16 @@ public class Dealer extends Person {
 			}
 		}
 
+		this.updatePriceMode = UpdatePrice.MeanNumSalesFn;
+
 		if(Settings.outputLog) {
 			System.out.println("new Dealer : " + this.personID + " entry tick: " + entryTick +" entry/48 : " +entryTick/48);
 		}
 	}
 
-	/** This method is called at the end of the day.  
+	/** 
+	 * 	This method is called at the end of the day. Priority 2.0
+	 * 	Sets salesYesterday, salesToday, dealsYesterday, dealsToday variables.  
 	 * 	It updates the @param unitsToSell for each dealer agent based on the updated selected mechanism.  
 	 */
 	@ScheduledMethod(start = Settings.StepsInDay, interval = Settings.StepsInDay, priority = 2)
@@ -110,16 +116,25 @@ public class Dealer extends Person {
 		Context context = ContextUtils.getContext(this);
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
 		Iterator itr = transactionNetwork.getEdges(this).iterator();
-		double currentTick = ContextCreator.getTickCount();		
+		double currentTick = ContextCreator.getTickCount();
+		
+		/* Set sales and deals variables here. */
+		this.salesYesterday = this.salesToday;
+		this.salesToday = this.salesPerDay;
+		this.dealsYesterday = this.dealsToday;
+		this.dealsToday = this.dealsPerDay;
 
-		System.out.println("D: " + this.personID  + " current tick: " +currentTick  +" day : " + currentTick/48);
-
+		if (Settings.outputLog) {
+			System.out.println("D: " + this.personID  + " current tick: " +currentTick  +" day : " + currentTick/48);
+		}
 		/* Decide units to sell, while still in the initial phase.  
 		 * Updates only if the dealer is new, i.e. Greedy or Planner.
 		 * If the dealer is old, it will sell at the uniform standard price.
 		 */
 		if (currentTick < Settings.initialPhase + this.entryTick) {
-			System.out.println("D: " + this.personID  +" entry: " + this.entryTick  + "LESS current tick: " +currentTick  +" day : " + currentTick/48);
+			if (Settings.outputLog) {
+				System.out.println("D: " + this.personID  +" entry: " + this.entryTick  + "LESS current tick: " +currentTick  +" day : " + currentTick/48);
+			}
 			if(this.dealerType == DealerType.Greedy) {
 				/* A 'greedy' dealer agent wants to sell as many drugs as possible in order to make the most profit.
 				 * The underlying assumption is that there is an unlimited supply available to the dealers so a 
@@ -145,343 +160,315 @@ public class Dealer extends Person {
 
 		/* If it is at the end of the initial phase. Calculate summaries of the transactions made during the initial phase.*/
 		else if(currentTick == (Settings.initialPhase + entryTick ) ){
-			//		else if(currentTick == (Settings.initialPhase + entryTick )  +( Settings.stepsInDay - (Settings.initialPhase + this.entryTick) % Settings.stepsInDay )){
-			System.out.println("D: " + this.personID  +" entry: " + this.entryTick + " EQUAL current tick: " +currentTick  +" day : " + currentTick/48);
-			System.out.println("(Settings.initialPhase + entryTick ): " + (Settings.initialPhase + entryTick ));
-			double val = (Settings.initialPhase + entryTick )+( Settings.StepsInDay - (Settings.initialPhase + this.entryTick) % Settings.StepsInDay );
-			System.out.println("Jamal: " + val);
+			if (Settings.outputLog) {
+				System.out.println("D: " + this.personID  +" entry: " + this.entryTick + " EQUAL current tick: " +currentTick  +" day : " + currentTick/48);
+				System.out.println("(Settings.initialPhase + entryTick ): " + (Settings.initialPhase + entryTick ));
+				double val = (Settings.initialPhase + entryTick )+( Settings.StepsInDay - (Settings.initialPhase + this.entryTick) % Settings.StepsInDay );
+				System.out.println("Jamal: " + val);
+			}
 			Summary summary = initializeMeanAndVarianceSA(itr);
 			summaries.add(summary);
 		}
 
+		/* In post-initial phase period. */
 		else if(currentTick > Settings.initialPhase + entryTick ){
-			System.out.println("D: " + this.personID  +" entry: " + this.entryTick + " GREATER current tick: " +currentTick  +" day : " + currentTick/48);
 			double numSales = 0;
 			double salesInUnits = 0;
+			/* Fetch all transactions made this day. lastDay is this day; we are at the end of this day. */
 			for (Transaction transaction : lastDayTransactions) {
 				numSales++;
 				salesInUnits += transaction.getDrugQtyInUnits();
-				//test code
-				double time = ((double)(transaction.getTime())) / (double ) Settings.StepsInDay;
-				int	day = (int) Math.ceil(time); 
-				System.out.println("D: " + this.personID + " updateprice Transaction time: " + transaction.getTime() + " Transaction day: " + day);
 			}	
-			System.out.println("today Numsales: " +numSales +  " todays salesInUnits: " + salesInUnits );
-			int lastIndex = summaries.size()-1;
-			double diff_new = salesInUnits - summaries.get(lastIndex).meanSalesUnits;
-			//1st impl
-			meanNumSalesFn(numSales );
-			//2nd impl
-			//			meanSaleUnitsFn(salesInUnits);
-			// 3rd impl
-			//			diffSalesInUnits(salesInUnits);
-			//calculate mean and variance for the next day based on today's sales.
+			if (Settings.outputLog) {
+				System.out.println("D: " + this.personID  +" entry: " + this.entryTick + " GREATER current tick: " +currentTick  +" day : " + currentTick/48);
+				System.out.println("today Numsales: " +numSales +  " todays salesInUnits: " + salesInUnits );
+			}
+
+			switch(this.updatePriceMode) {
+			case MeanNumSalesFn: //1st implementation
+				meanNumSalesFn(numSales );
+				break;
+			case MeanSaleUnitsFn: //2nd implementation
+				meanSaleUnitsFn(salesInUnits);
+				break;
+			case DiffSalesInUnitsFn: //3rd implementation
+				diffSalesInUnits(salesInUnits);
+				break;
+			default: break;
+			}			
+			/* Calculate mean and variance for the next day based on today's sales. */
 			summaries.add(progressiveSummarySA((int)currentTick, numSales, salesInUnits));
 		}
-		System.out.println("clear last day transaction list........");
-		lastDayTransactions.clear();			
+
+		/* Clear last day transactions.*/
+		lastDayTransactions.clear();
+
+		if (Settings.outputLog) {
+			System.out.println("cleared last day transaction list........");		
+		}			
 	}
 
+	/**
+	 * This is the first implementation
+	 * @param numSales is today's total number of sales.
+	 */
 	public void meanNumSalesFn(double numSales){
 		int lastIndex = summaries.size()-1;
-		double stdDivNumSales = Math.sqrt(summaries.get(lastIndex).varianceNumSales);
+		double stdDevNumSales = Math.sqrt(summaries.get(lastIndex).varianceNumSales);
 		double meanNumSales = summaries.get(lastIndex).meanNumSales;
 
-		if(numSales < (meanNumSales - 3*stdDivNumSales) ){
-			if (unitsToSell < Settings.DealersParams.MaxUnitsToSell)
+		/* If my sales are Less than or Equal to (mean-k*stdDev) then increase units; i.e. reduce price per units, k being NumStandardDeviations  */
+		if (numSales <= (meanNumSales - NumStandardDeviations * stdDevNumSales)) {
+			if (unitsToSell < Settings.DealersParams.MaxUnitsToSell) {
 				unitsToSell = unitsToSell + 1;
-			else
+			} 
+			else {
 				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.MinUnitsToSell, (int)Settings.DealersParams.MaxUnitsToSell);
+			}
 		}
-		else if(numSales > (meanNumSales + 3*stdDivNumSales) ){ 
+		/* If my sales are Greater than or Equal to (mean+k*stdDev) then decrease units; i.e. increase price per units, k being NumStandardDeviations  */
+		else if(numSales >= (meanNumSales + NumStandardDeviations * stdDevNumSales) ){ 
 			if(unitsToSell > Settings.DealersParams.MinUnitsToSell)
 				unitsToSell = unitsToSell - 1;
-			else
+			else {
 				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.MinUnitsToSell, (int)Settings.DealersParams.MaxUnitsToSell);
+			}
 		}
 	}
+
+	/**
+	 * This is the second implementation. It uses mean sales units.
+	 * @param salesInUnits is today's total units of drugs sold.
+	 */
 	public void meanSaleUnitsFn(double salesInUnits){
 		int lastIndex = summaries.size()-1;		
-		double stdDivSaleUnits = Math.sqrt(summaries.get(lastIndex).varianceSalesUnits);
+		double stdDevSaleUnits = Math.sqrt(summaries.get(lastIndex).varianceSalesUnits);
 		double meanSaleUnits = summaries.get(lastIndex).meanSalesUnits;
 
-		if(salesInUnits < (meanSaleUnits - 3*stdDivSaleUnits) ){
-			if (unitsToSell < Settings.DealersParams.MaxUnitsToSell)
+		if (salesInUnits <= (meanSaleUnits - NumStandardDeviations * stdDevSaleUnits)) {
+			if (unitsToSell < Settings.DealersParams.MaxUnitsToSell) {
 				unitsToSell = unitsToSell + 1;
-			else
+			}
+			else {
 				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.MinUnitsToSell, (int)Settings.DealersParams.MaxUnitsToSell);
+			}
 		}
-		else if(salesInUnits > (meanSaleUnits + 3*stdDivSaleUnits) ){ 
-			if(unitsToSell > Settings.DealersParams.MinUnitsToSell)
+		else if(salesInUnits >= (meanSaleUnits + NumStandardDeviations * stdDevSaleUnits) ){ 
+			if(unitsToSell > Settings.DealersParams.MinUnitsToSell) {
 				unitsToSell = unitsToSell - 1;
-			else
+			}
+			else {
 				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.MinUnitsToSell, (int)Settings.DealersParams.MaxUnitsToSell);
+			}
 		}
 	}
+
+	/**
+	 * This is the third implementation.
+	 * @param salesInUnits is today's total units of drugs sold.
+	 */
 	public void diffSalesInUnits(double salesInUnits){ 
 		int lastIndex = summaries.size()-1;
-		double diff_new = salesInUnits - summaries.get(lastIndex).meanSalesUnits;
+		double newDifference = salesInUnits - summaries.get(lastIndex).meanSalesUnits;
 
-		if (diff_new < -1 ) {
-			if(unitsToSell < Settings.DealersParams.MaxUnitsToSell)
+		if (newDifference < -1) {
+			if(unitsToSell < Settings.DealersParams.MaxUnitsToSell) {
 				unitsToSell = unitsToSell + 1;
-			else
+			}
+			else {
 				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.MinUnitsToSell, (int)Settings.DealersParams.MaxUnitsToSell);
+			}
 		}		 
-		else if (diff_new > 1 ) {
-			if(unitsToSell > Settings.DealersParams.MinUnitsToSell)
+		else if (newDifference > 1) {
+			if(unitsToSell > Settings.DealersParams.MinUnitsToSell) {
 				unitsToSell = unitsToSell - 1;
-			else
+			}
+			else {
 				unitsToSell = Uniform.staticNextIntFromTo((int)Settings.DealersParams.MinUnitsToSell, (int)Settings.DealersParams.MaxUnitsToSell);
+			}
 		}				
 	}
 
-	/** Calculate the online variance (REF: http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#On-line_algorithm)*/
-	private Summary progressiveSummarySA(int currentTick, double numSales, double salesInUnits) {
-		Summary summary = new Summary();
-		int lastIndex = summaries.size()-1;
-		summary.n = (int) summaries.get(lastIndex).n + 1;
-
-		summary.meanNumSalesProgressive = summaries.get(lastIndex).meanNumSalesProgressive;
-		summary.meanSalesUnitProgressive = summaries.get(lastIndex).meanSalesUnitProgressive;
-		summary.M2NumSalesProgressive = summaries.get(lastIndex).M2NumSalesProgressive;
-		summary.M2SalesUnitsProgressive = summaries.get(lastIndex).M2SalesUnitsProgressive;
-
-		double deltaNumSales = numSales - summary.meanNumSalesProgressive;
-		double deltaSalesUnits = salesInUnits - summary.meanSalesUnitProgressive;
-
-		summary.meanNumSalesProgressive += deltaNumSales/summary.n;
-		summary.meanSalesUnitProgressive += deltaSalesUnits/summary.n;
-
-		summary.M2NumSalesProgressive += deltaNumSales * (numSales - summary.meanNumSalesProgressive);
-		summary.M2SalesUnitsProgressive += deltaSalesUnits*(salesInUnits - summary.meanSalesUnitProgressive);
-
-
-		summary.meanNumSales = summary.meanNumSalesProgressive;
-		summary.meanSalesUnits = summary.meanSalesUnitProgressive;
-
-		summary.varianceNumSales = summary.M2NumSalesProgressive/(summary.n-1);
-		summary.varianceSalesUnits = summary.M2SalesUnitsProgressive/(summary.n-1);
-
-		return summary;
-
-	}
-	private Summary initializeMeanAndVarianceSA(Iterator itr) {
-		int totalDays = (int) (Settings.NumDaysInitialPhase) ;//+ 1 ;
-		double totalNumSales = 0;
-		double totalUnitsSold = 0;
-		double sumSqUnits = 0;
-		double sumSqNumSales = 0;
-		Summary summary = new Summary();
-
-		String strSales = "", strSalesUnits = ""; 
-
-		int num_sales[] = new int[ totalDays ];
-		double sales_units[]=  new double[totalDays]; 
-		for(int i =0; i < totalDays ; i++){
-			num_sales[i] = 0;
-			sales_units[i] = 0.0;
-		}
-		//now calculate summaries
-		while (itr.hasNext()) {
-			TransactionEdge edge = (TransactionEdge) itr.next();
-			for (Transaction transaction : (ArrayList<Transaction>) edge.getTransactionList()) {
-				if(transaction.getDrugQtyInUnits() > 0.0 && transaction.getTime() > this.entryTick ){
-					double time = ((double)(transaction.getTime() - this.entryTick)) / (double ) Settings.StepsInDay;
-					int	day = (int) Math.ceil(time); 
-					num_sales[day-1]++;
-					totalNumSales++;
-					totalUnitsSold += transaction.getDrugQtyInUnits();
-					sales_units[day-1] += transaction.getDrugQtyInUnits();
-				}
-			}
-		}
-		for(int i = 0; i < totalDays; i++  ){
-			sumSqNumSales += num_sales[i] * num_sales[i];
-			sumSqUnits += ( sales_units[i] * sales_units[i] );// * ( num_sales[i] * sales_units[i] );
-			strSales += (num_sales[i] + " , ");
-			strSalesUnits += (sales_units[i] + " , ");
-			summary.n++;
-			double delta = num_sales[i] - summary.meanNumSalesProgressive;
-			summary.meanNumSalesProgressive += delta/summary.n;
-			summary.M2NumSalesProgressive += delta * (num_sales[i] - summary.meanNumSalesProgressive);
-
-			double deltaV = ( sales_units[i] )  - summary.meanSalesUnitProgressive;
-			summary.meanSalesUnitProgressive += deltaV/summary.n;
-			summary.M2SalesUnitsProgressive += deltaV * ( sales_units[i]  - summary.meanSalesUnitProgressive);
-
-		}
-
-		double varianceNUMS = summary.M2NumSalesProgressive / (summary.n-1);
-		double varianceSU = summary.M2SalesUnitsProgressive / (summary.n-1);
-
-		summary.meanNumSales = totalNumSales/totalDays;
-		summary.meanSalesUnits = totalUnitsSold/totalDays;
-
-		summary.varianceNumSales = (sumSqNumSales - (summary.meanNumSales*totalNumSales))/(totalDays-1);
-		summary.varianceSalesUnits = (sumSqUnits - (summary.meanSalesUnits*totalUnitsSold))/(totalDays-1);
-
-		if(Math.abs(summary.meanNumSales - summary.meanNumSalesProgressive) > 0.1)
-			System.err.println("MEAN numsales IS NOT CALCULATED CORRECTLY. " + summary.meanNumSales + " , " + summary.meanNumSalesProgressive);
-
-		if(Math.abs(summary.varianceNumSales - varianceNUMS) > 0.1 )
-			System.err.println("VARIANCE numsales IS NOT CALCULATED CORRECTLY. " +  summary.varianceNumSales+ " , " +varianceNUMS);
-
-		if(Math.abs(summary.meanSalesUnits - summary.meanSalesUnitProgressive) > 0.1)
-			System.err.println("MEAN salesunits IS NOT CALCULATED CORRECTLY. " + summary.meanSalesUnits + " , " + summary.meanSalesUnitProgressive);
-
-		if(Math.abs(summary.varianceSalesUnits - varianceSU) > 0.1)
-			System.err.println("VARIANCE salesunits IS NOT CALCULATED CORRECTLY. " +  summary.varianceSalesUnits + " , " +varianceSU);
-
-		if(Settings.errorLog){
-			System.out.println("Dealer: "+ this.personID + " sales:" + strSales + "  sum sq = " + sumSqNumSales);
-			System.out.println("Dealer: "+ this.personID +  " meanNumSales: " + summary.meanNumSales + " meanSalesUnits: " + summary.meanSalesUnits +
-					" NumSaleVar: " + summary.varianceNumSales + " SalesUnitVar: " + summary.varianceSalesUnits);
-		}
-		return summary;
-	}
-
+	/**
+	 * Supply method to replenish drug supply to this dealer. It is called at every time step in the simulation.
+	 * Also, if a dealer has a surplus amount left and the supply option is 'Regular-Surplus' then
+	 * the dealer agent is dropped from the context. 
+	 */
 	//TODO:make everyone interval tick different
 	@ScheduledMethod(start = 1, interval = 1, priority = 4)
 	public void supply() {
+		boolean shouldDropOut = false;
 		double currentTick = ContextCreator.getTickCount();
+		/* If my drugs are zero or less then store current tick as the time where I had zero drugs.*/
 		if (this.drugs <= 0 && lastTimeZeroDrug == -1)  {
 			lastTimeZeroDrug = currentTick;
 		}
+
+		/* If supply option is 'Automatic' then first check current drugs quantities and re-supply if less than current 'units to Sell'. */
 		if (Settings.Resupply.getSupplyOptionForDealer().equals(SupplyOption.Automatic)) {
-			if (this.drugs <  unitsToSell ) {
-				this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
-			}	
-		}
+			supplyAutomatic();
+		}	
+
 		else {
-			if ( ( (currentTick - entryTick) % Settings.DealersParams.ResupplyInterval) == 0) {
+			/* I am in the re-supply interval */
+			if ((currentTick - entryTick) % Settings.DealersParams.ResupplyInterval == 0) {
+				/* If the re-supply option is regular surplus then check if check for Drop-out. */
 				if(Settings.Resupply.getSupplyOptionForDealer().equals(SupplyOption.RegularSurplus)){
 					this.surplus = this.drugs;  
-					if(this.surplus > Settings.DealersParams.SurplusLimit ){
-						Context context = ContextUtils.getContext(this);
-						context.remove(this);	
-						if(Settings.errorLog)
-							System.out.println("tick:"+ ContextCreator.getTickCount()+ " Dealer dropping out due to surplus :  " + personID);
+					if (this.surplus > Settings.DealersParams.SurplusLimit) {
+						shouldDropOut = true;
 					}
 				}
+				/* This dealer did not drop-out. So re-supply drug. */
 				this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));		
 			}
 		}
+
+		/* Re-supply was successful. Last time zero drug is reset. */
 		if (this.drugs > 0) {
 			lastTimeZeroDrug = -1;
+		}
+
+		/* Remove the dealer from the context if it should be dropped. */
+		if (shouldDropOut == true) {
+			dropFromContext();
 		}
 	}
 
 	/** 
-	 * 	Dealers are supplied an inventory of drugs on a schedule, based on the cycles of the model, with a standard amount of drug (we could start with 12 grams supplied every three weeks). They all start with the same amount. If dealers run out of drug supplies to sell 
+	 * Dealers are supplied an inventory of drugs on a schedule, based on the cycles of the model, with a standard amount of drug (we could start with 12 grams supplied every three weeks). They all start with the same amount. If dealers run out of drug supplies to sell 
 	 * before their scheduled re-supply they are automatically re-supplied. If at the re-supply time dealer still has drug to sell there can be two options (to play with in experiments). 
 	 * The first option, dealers are re-supplied with the difference between what is remaining and their original supply amount. The second option, dealers could be resupplied with the standard amount and will have to deal with the “surplus.” 
 	 * Dealer agents could grow as there business increases, shrink as their business decreases, and change colors if in the “black” at there last resupply deadline. Alternatively, will only a few dealers it might be nice to see the supplies and surpluses displayed in graphs.  
 	 * If a dealer runs out of customers or drug supply, after X number of cycles of the simulation, they are eliminated. 
 	 */
-
 	@ScheduledMethod(start = Settings.DealersParams.TimeToLeaveMarket, interval = 1, priority = 4)
 	public void dropOut() {		
 		double currentTick = ContextCreator.getTickCount();
-		//at least spend min time before drop out
-		if(currentTick - entryTick < Settings.DealersParams.TimeToLeaveMarket )
+		/* At least spend minimum required time before drop out. */
+		if(currentTick - entryTick < Settings.DealersParams.TimeToLeaveMarket ) {
 			return;
-		if(ContextCreator.getTickCount() == this.evaluationInterval 
-				||	(ContextCreator.getTickCount() % (Settings.DealersParams.TimeToLeaveMarket) ) == this.evaluationInterval ) {
-			Context context = ContextUtils.getContext(this);
-			if (	(this.timeLastTransaction == -1)
-					/*	&& currentTick - lastTimeZeroDrug >= Settings.DealersParams.TimeToLeaveMarket)*/
-					//no customer
-					||
-					currentTick - timeLastTransaction > Settings.DealersParams.TimeToLeaveMarket		) 
-			{
-				context.remove(this);	
-				if(Settings.errorLog)
-					System.out.println("tick:"+ ContextCreator.getTickCount()+" Dealer dropping out due to NO customer. :  " + personID);
+		}
+
+		if(currentTick == this.evaluationInterval 
+				||	currentTick % Settings.DealersParams.TimeToLeaveMarket == this.evaluationInterval) {
+			if (this.timeLastTransaction == -1 /*  No customer came at all */
+					//&& currentTick - lastTimeZeroDrug >= Settings.DealersParams.TimeToLeaveMarket)
+					/*  Enough time has passed without a customer. */
+					|| currentTick - timeLastTransaction > Settings.DealersParams.TimeToLeaveMarket) {
+				dropFromContext();
 			}
 		}
 	}
 
-	//	@ScheduledMethod(start = Settings.stepsInDay, interval = Settings.DealersParams.newDealerInterval, priority = 2)
-	@ScheduledMethod(start = Settings.StepsInDay, interval = Settings.DealersParams.NewDealerInterval, priority = 1)
-	public void newDealer() {		
-		if (dealsPerDay > Settings.DealersParams.MaxDealsLimit ) 
-		{
-			Dealer new_dealer = new Dealer(this.personID, this.unitsToSell);
-			Context context = ContextUtils.getContext(this);
-			context.add(new_dealer);
-			Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
-
-			int numOfCustomers = transactionNetwork.getDegree(this);
-			Iterator itr_customers = transactionNetwork.getEdges(this).iterator();
-
-			if(transactionNetwork.getDegree(this) != transactionNetwork.getOutDegree(this) ){
-				System.err.println("transactionNetwork.getDegree(this) != transactionNetwork.getOutDegree(this)");
-			}
-			numOfCustomers /= 2;
-			int i=0;
-			Customer customer = null;
-			ArrayList<TransactionEdge> list = new ArrayList<TransactionEdge>(); 
-			ArrayList<Transaction> transactionlist = new ArrayList<Transaction>();
-
-			while(itr_customers.hasNext()	&&	i < numOfCustomers){
-				TransactionEdge edge = (TransactionEdge) itr_customers.next();
-
-				Object objS = edge.getSource();
-				Object objT = edge.getTarget();
-				if(objS instanceof Customer){
-					customer  = (Customer) objS;
-				}
-				else if(objT instanceof Customer){
-					customer = (Customer) objT;
-				}
-				else{
-					System.err.println("FATAL ERR: newDealer neither source nor target in transaction edge are customer");
-					return;
-				}
-				list.add(edge);
-				TransactionEdge newEdge = new TransactionEdge(new_dealer, customer);
-				transactionlist = edge.getTransactionList();
-				for(Transaction transaction : transactionlist ){
-					transaction.setDealer(new_dealer);
-				}
-				newEdge.setTransactionList(transactionlist);
-				transactionNetwork.addEdge(newEdge);
-				i++;
-			}
-			for(TransactionEdge e : list){
-				transactionNetwork.removeEdge(e);
-			}
-			if(Settings.errorLog){
-				System.out.println("tick: "+ ContextCreator.getTickCount()+" Dealer: " + personID + " spliting due to more deals: " + dealsPerDay + "  num of customer: " +numOfCustomers+ "  new Dealer:  " + new_dealer.getPersonID());
-			}
-
+	/** Remove this dealer agent from the context. */
+	private void dropFromContext() {
+		Context context = ContextUtils.getContext(this);
+		context.remove(this);	
+		if(Settings.errorLog) {
+			System.out.println("tick:"+ ContextCreator.getTickCount()+ " Dealer dropping out due to surplus :  " + personID);
 		}
-		this.salesYesterday = this.salesToday;
-		this.salesToday = salesPerDay;
-		this.dealsYesterday = this.dealsToday;
-		this.dealsToday = this.dealsPerDay;
+	}
+
+	/**
+	 * In this method, a new dealer is created if an old dealer exceeds its load of deals in the day.
+	 * This method is called with the lowest priority.
+	 * Set to 1.5 so that it is called just before the setTransactionVariables() method
+	 */
+	@ScheduledMethod(start = Settings.StepsInDay, interval = Settings.DealersParams.NewDealerInterval, priority = 1.5)
+	public void newDealer() {		
+		if (this.dealsToday <= Settings.DealersParams.MaxDealsLimit) {
+			return;
+		}
+		/* Create a new dealer with the first argument as the 'parent dealer's' (this) ID */
+		Dealer newDealer = new Dealer(this.personID, this.unitsToSell);
+		Context context = ContextUtils.getContext(this);
+		context.add(newDealer);
+		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
+
+		int numCustomers = transactionNetwork.getDegree(this);
+		Iterator itrCustomers = transactionNetwork.getEdges(this).iterator();
+
+		if(transactionNetwork.getDegree(this) != transactionNetwork.getOutDegree(this)){
+			System.err.println(" TransactionNetwork.getDegree(this) != transactionNetwork.getOutDegree(this)");
+		}
+
+		/* Split the parent dealer's number of customers in half. */
+		numCustomers /= 2;
+
+		int i=0;
+		Customer customer = null;
+		ArrayList<TransactionEdge> list = new ArrayList<TransactionEdge>(); 
+
+		while (itrCustomers.hasNext() && i<numCustomers) {				
+			TransactionEdge edge = (TransactionEdge) itrCustomers.next();
+			Object objSource = edge.getSource();
+			Object objTarget = edge.getTarget();
+			if(objSource instanceof Customer){
+				customer  = (Customer) objSource;
+			}
+			else if(objTarget instanceof Customer){
+				customer = (Customer) objTarget;
+			}
+			else{
+				System.err.println("FATAL ERR: newDealer neither source nor target in transaction edge are customer");
+				return;
+			}
+			list.add(edge);
+			/* Create a new edge between the customer and the new dealer. */
+			TransactionEdge newEdge = new TransactionEdge(newDealer, customer);
+			/* Fetch the transactions list from the edge. */
+			ArrayList<Transaction> transactionlist = edge.getTransactionList();
+			/* Set the transaction's dealer to be new dealer. We are assuming that customers know that this new dealer is
+			 * an off shoot of the previous dealer. */
+			for (Transaction transaction : transactionlist) {
+				transaction.setDealer(newDealer);
+			}				
+			/* Assign the old edge's transaction list to this new edge. */
+			newEdge.setTransactionList(transactionlist);
+			/* Add the new edge in the transaction networks. */
+			transactionNetwork.addEdge(newEdge);
+			i++;
+		}
+
+		for(TransactionEdge e : list){
+			transactionNetwork.removeEdge(e);
+		}
+
+		if(Settings.errorLog){
+			System.out.println("tick: "+ ContextCreator.getTickCount()+" Dealer: " + personID + " spliting due to more deals: " + dealsPerDay + "  num of customer: " +numCustomers+ "  new Dealer:  " + newDealer.getPersonID());
+		}
+	}
+
+
+	/**
+	 * Sets salesPerDay, dealsPerDay variables to zero. 
+	 * We want this method to execute in the last.
+	 */
+	@ScheduledMethod(start = Settings.StepsInDay, interval = Settings.DealersParams.NewDealerInterval, priority = 1)
+	public void setTransactionVariables() {
 		salesPerDay = 0.0;
 		dealsPerDay = 0;
 	}
-	/**
-	 * TODO: Replace the Normal function, currently, only for testing purposes 
-	 * and link it  the updatePrice method. 
-	 * @return
-	 */
+
+	/** Return unitsToSell*/
 	public double returnUnitsToSell() {
 		if(this.drugs < unitsToSell){ 
 			return this.drugs;
 		}
-		return unitsToSell;
+		else {
+			return unitsToSell;
+		}
 	}
-	
+
+	/** Returns current cost per unit. */
 	public double returnCostPerUnit() {
 		return (Settings.PricePerGram/this.unitsToSell);
 	}
 
+	/** Returns true if this dealer can sell drugs at the moment; otherwise, false. */
 	public boolean canSellDrugs() {
-		if(this.drugs < unitsToSell){ 
+		if (this.drugs < unitsToSell) { 
 			if	(Settings.Resupply.getSupplyOptionForDealer().equals(Settings.SupplyOption.Automatic)){
 				supplyAutomatic();
 				return true;
@@ -493,19 +480,24 @@ public class Dealer extends Person {
 		return true;
 	}
 
+	/** 
+	 * @param transaction
+	 */
 	public boolean sellDrug(Transaction transaction) {
-		if (this.drugs <= 0.0 && Settings.errorLog){
-			System.err.println("Dealer "+this.personID+ "  cant sell. drug amount is zero. " + ContextCreator.getTickCount());
+		if (this.drugs <= 0.0) {
+			if (Settings.errorLog) {
+				System.err.println("Dealer "+this.personID+ "  cant sell. drug amount is zero. " + ContextCreator.getTickCount());				
+			}
 			return false;
 		}
-
+		
 		deductDrug(transaction.getDrugQtyInUnits());
 		addMoney(Settings.PricePerGram);
 		lastDayTransactions.add(transaction);
 		timeLastTransaction = transaction.getTime();
 		dealsPerDay++;
 		salesPerDay += transaction.getDrugQtyInUnits();
-		totalSales += salesPerDay;
+		totalSales += transaction.getDrugQtyInUnits();
 		if(Settings.errorLog){
 			double time = ((double)(transaction.getTime())) / (double ) Settings.StepsInDay;
 			int	day = (int) Math.ceil(time); 
@@ -514,11 +506,13 @@ public class Dealer extends Person {
 		return true;
 	}
 
-	public void supplyAutomatic() {
+	/** Supply drug automatically. */
+	private void supplyAutomatic() {
 		if (this.drugs < unitsToSell ) {
 			this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
 		}
 	}
+
 	public double getSalesYesterday() {
 		return salesYesterday;
 	}
@@ -558,6 +552,7 @@ public class Dealer extends Person {
 	public double getTotalSales() {
 		return totalSales;
 	}
+
 	protected class Summary {
 		public double meanSalesUnits;
 		public double meanNumSales;
@@ -566,19 +561,129 @@ public class Dealer extends Person {
 
 		public double n ;
 		public double meanNumSalesProgressive, meanSalesUnitProgressive;
-		public double M2NumSalesProgressive, M2SalesUnitsProgressive;
+		public double m2NumSalesProgressive, m2SalesUnitsProgressive;
 
 		public Summary() {
 			meanSalesUnits = 0;
 			meanNumSales = 0;
 			varianceSalesUnits = 0;
 			varianceNumSales = 0;
-
 			n = 0;
-			M2NumSalesProgressive = 0;
-			M2SalesUnitsProgressive = 0;
+			m2NumSalesProgressive = 0;
+			m2SalesUnitsProgressive = 0;
 			meanNumSalesProgressive = 0;
 			meanSalesUnitProgressive = 0;
 		}
+	}
+
+	/** 
+	 * Calculates 'online' variance (REF: http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#On-line_algorithm)
+	 */
+	private Summary progressiveSummarySA(int currentTick, double numSales, double salesInUnits) {
+		Summary summary = new Summary();
+		int lastIndex = summaries.size()-1;
+		summary.n = (int) summaries.get(lastIndex).n + 1;
+
+		summary.meanNumSalesProgressive = summaries.get(lastIndex).meanNumSalesProgressive;
+		summary.meanSalesUnitProgressive = summaries.get(lastIndex).meanSalesUnitProgressive;
+		summary.m2NumSalesProgressive = summaries.get(lastIndex).m2NumSalesProgressive;
+		summary.m2SalesUnitsProgressive = summaries.get(lastIndex).m2SalesUnitsProgressive;
+
+		double deltaNumSales = numSales - summary.meanNumSalesProgressive;
+		double deltaSalesUnits = salesInUnits - summary.meanSalesUnitProgressive;
+
+		summary.meanNumSalesProgressive += deltaNumSales/summary.n;
+		summary.meanSalesUnitProgressive += deltaSalesUnits/summary.n;
+
+		summary.m2NumSalesProgressive += deltaNumSales * (numSales - summary.meanNumSalesProgressive);
+		summary.m2SalesUnitsProgressive += deltaSalesUnits*(salesInUnits - summary.meanSalesUnitProgressive);
+
+		summary.meanNumSales = summary.meanNumSalesProgressive;
+		summary.meanSalesUnits = summary.meanSalesUnitProgressive;
+
+		summary.varianceNumSales = summary.m2NumSalesProgressive/(summary.n-1);
+		summary.varianceSalesUnits = summary.m2SalesUnitsProgressive/(summary.n-1);
+
+		return summary;
+	}
+
+	/**
+	 * 
+	 * @param itr
+	 * @return
+	 */
+	private Summary initializeMeanAndVarianceSA(Iterator itr) {
+		int totalDays = (int) (Settings.NumDaysInitialPhase) ;//+ 1 ;
+		double totalNumSales = 0;
+		double totalUnitsSold = 0;
+		double sumSqUnits = 0;
+		double sumSqNumSales = 0;
+		Summary summary = new Summary();
+
+		String strSales = "", strSalesUnits = ""; 
+
+		int num_sales[] = new int[ totalDays ];
+		double sales_units[]=  new double[totalDays]; 
+		for(int i =0; i < totalDays ; i++){
+			num_sales[i] = 0;
+			sales_units[i] = 0.0;
+		}
+		//now calculate summaries
+		while (itr.hasNext()) {
+			TransactionEdge edge = (TransactionEdge) itr.next();
+			for (Transaction transaction : (ArrayList<Transaction>) edge.getTransactionList()) {
+				if(transaction.getDrugQtyInUnits() > 0.0 && transaction.getTime() > this.entryTick ){
+					double time = ((double)(transaction.getTime() - this.entryTick)) / (double ) Settings.StepsInDay;
+					int	day = (int) Math.ceil(time); 
+					num_sales[day-1]++;
+					totalNumSales++;
+					totalUnitsSold += transaction.getDrugQtyInUnits();
+					sales_units[day-1] += transaction.getDrugQtyInUnits();
+				}
+			}
+		}
+		for(int i = 0; i < totalDays; i++  ){
+			sumSqNumSales += num_sales[i] * num_sales[i];
+			sumSqUnits += ( sales_units[i] * sales_units[i] );// * ( num_sales[i] * sales_units[i] );
+			strSales += (num_sales[i] + " , ");
+			strSalesUnits += (sales_units[i] + " , ");
+			summary.n++;
+			double delta = num_sales[i] - summary.meanNumSalesProgressive;
+			summary.meanNumSalesProgressive += delta/summary.n;
+			summary.m2NumSalesProgressive += delta * (num_sales[i] - summary.meanNumSalesProgressive);
+
+			double deltaV = ( sales_units[i] )  - summary.meanSalesUnitProgressive;
+			summary.meanSalesUnitProgressive += deltaV/summary.n;
+			summary.m2SalesUnitsProgressive += deltaV * ( sales_units[i]  - summary.meanSalesUnitProgressive);
+
+		}
+
+		double varianceNUMS = summary.m2NumSalesProgressive / (summary.n-1);
+		double varianceSU = summary.m2SalesUnitsProgressive / (summary.n-1);
+
+		summary.meanNumSales = totalNumSales/totalDays;
+		summary.meanSalesUnits = totalUnitsSold/totalDays;
+
+		summary.varianceNumSales = (sumSqNumSales - (summary.meanNumSales*totalNumSales))/(totalDays-1);
+		summary.varianceSalesUnits = (sumSqUnits - (summary.meanSalesUnits*totalUnitsSold))/(totalDays-1);
+
+		if(Math.abs(summary.meanNumSales - summary.meanNumSalesProgressive) > 0.1)
+			System.err.println("MEAN numsales IS NOT CALCULATED CORRECTLY. " + summary.meanNumSales + " , " + summary.meanNumSalesProgressive);
+
+		if(Math.abs(summary.varianceNumSales - varianceNUMS) > 0.1 )
+			System.err.println("VARIANCE numsales IS NOT CALCULATED CORRECTLY. " +  summary.varianceNumSales+ " , " +varianceNUMS);
+
+		if(Math.abs(summary.meanSalesUnits - summary.meanSalesUnitProgressive) > 0.1)
+			System.err.println("MEAN salesunits IS NOT CALCULATED CORRECTLY. " + summary.meanSalesUnits + " , " + summary.meanSalesUnitProgressive);
+
+		if(Math.abs(summary.varianceSalesUnits - varianceSU) > 0.1)
+			System.err.println("VARIANCE salesunits IS NOT CALCULATED CORRECTLY. " +  summary.varianceSalesUnits + " , " +varianceSU);
+
+		if(Settings.errorLog){
+			System.out.println("Dealer: "+ this.personID + " sales:" + strSales + "  sum sq = " + sumSqNumSales);
+			System.out.println("Dealer: "+ this.personID +  " meanNumSales: " + summary.meanNumSales + " meanSalesUnits: " + summary.meanSalesUnits +
+					" NumSaleVar: " + summary.varianceNumSales + " SalesUnitVar: " + summary.varianceSalesUnits);
+		}
+		return summary;
 	}
 }

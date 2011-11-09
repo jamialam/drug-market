@@ -528,9 +528,6 @@ public class Dealer extends Person {
 	public int getEvaluationInterval() {
 		return evaluationInterval;
 	}
-	public float getSale() {
-		return (float) salesPerDay;
-	}
 	public double getDealsPerDay() {
 		return dealsPerDay;
 	}
@@ -622,19 +619,23 @@ public class Dealer extends Person {
 
 		String strSales = "", strSalesUnits = ""; 
 
-		int num_sales[] = new int[ totalDays ];
-		double sales_units[]=  new double[totalDays]; 
-		for(int i =0; i < totalDays ; i++){
+		int num_sales[] = new int[totalDays];
+		double sales_units[]=  new double[totalDays];
+		
+		/* Initialize arrays*/
+		for(int i=0; i<totalDays; i++){
 			num_sales[i] = 0;
 			sales_units[i] = 0.0;
 		}
-		//now calculate summaries
+		
+		/* Now calculate summaries */
 		while (itr.hasNext()) {
 			TransactionEdge edge = (TransactionEdge) itr.next();
 			for (Transaction transaction : (ArrayList<Transaction>) edge.getTransactionList()) {
-				if(transaction.getDrugQtyInUnits() > 0.0 && transaction.getTime() > this.entryTick ){
-					double time = ((double)(transaction.getTime() - this.entryTick)) / (double ) Settings.StepsInDay;
-					int	day = (int) Math.ceil(time); 
+				if (transaction.getDrugQtyInUnits() > 0.0 && transaction.getTime() > this.entryTick) {
+					double time = ((double)(transaction.getTime() - this.entryTick)) / ((double) Settings.StepsInDay);
+					int	day = (int) Math.ceil(time);
+					/* Why day-1? */
 					num_sales[day-1]++;
 					totalNumSales++;
 					totalUnitsSold += transaction.getDrugQtyInUnits();
@@ -642,12 +643,16 @@ public class Dealer extends Person {
 				}
 			}
 		}
-		for(int i = 0; i < totalDays; i++  ){
+		
+		for (int i=0; i<totalDays; i++) {
 			sumSqNumSales += num_sales[i] * num_sales[i];
-			sumSqUnits += ( sales_units[i] * sales_units[i] );// * ( num_sales[i] * sales_units[i] );
+			sumSqUnits +=  sales_units[i] * sales_units[i]; // * ( num_sales[i] * sales_units[i] );
+			
 			strSales += (num_sales[i] + " , ");
 			strSalesUnits += (sales_units[i] + " , ");
+			
 			summary.n++;
+
 			double delta = num_sales[i] - summary.meanNumSalesProgressive;
 			summary.meanNumSalesProgressive += delta/summary.n;
 			summary.m2NumSalesProgressive += delta * (num_sales[i] - summary.meanNumSalesProgressive);

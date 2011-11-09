@@ -27,12 +27,12 @@ public class Dealer extends Person {
 	private double timeLastTransaction;
 	/** Amount of drug that was surplus for this dealer agent. */
 	private double surplus;
-	
+
 	/** No. of deals made yesterday. */
 	private double dealsYesterday;
 	/** No. of deals made today; calculated at the end of the day. */
 	private double dealsToday;
-	
+
 	/** Interval for this dealer when evaluation was made for resupply and surplus amount. */
 	private int evaluationInterval;
 	/**ID of the parent dealer from this (new dealer) is created. */
@@ -49,7 +49,7 @@ public class Dealer extends Person {
 	private double salesYesterday;
 	private double salesToday;
 	private double totalSales;
-	
+
 	public static enum UpdatePrice {MeanNumSalesFn, MeanSaleUnitsFn, DiffSalesInUnitsFn};
 	public static final double NumStandardDeviations = 3.0; 
 	private UpdatePrice updatePriceMode;
@@ -117,7 +117,7 @@ public class Dealer extends Person {
 		Network transactionNetwork = (Network)(context.getProjection(Settings.transactionnetwork));
 		Iterator itr = transactionNetwork.getEdges(this).iterator();
 		double currentTick = ContextCreator.getTickCount();
-		
+
 		/* Set sales and deals variables here. */
 		this.salesYesterday = this.salesToday;
 		this.salesToday = this.salesPerDay;
@@ -303,24 +303,15 @@ public class Dealer extends Person {
 		if (this.drugs <= 0 && lastTimeZeroDrug == -1)  {
 			lastTimeZeroDrug = currentTick;
 		}
-
-		/* If supply option is 'Automatic' then first check current drugs quantities and re-supply if less than current 'units to Sell'. */
-		if (Settings.Resupply.getSupplyOptionForDealer().equals(SupplyOption.Automatic)) {
-			supplyAutomatic();
-		}	
-
-		else {
-			/* I am in the re-supply interval */
-			if ((currentTick - entryTick) % Settings.DealersParams.ResupplyInterval == 0) {
-				/* If the re-supply option is regular surplus then check if check for Drop-out. */
-				if(Settings.Resupply.getSupplyOptionForDealer().equals(SupplyOption.RegularSurplus)){
-					this.surplus = this.drugs;  
-					if (this.surplus > Settings.DealersParams.SurplusLimit) {
-						shouldDropOut = true;
-					}
-				}
+		/* I am in the re-supply interval */
+		if ((currentTick - entryTick) % Settings.DealersParams.ResupplyInterval == 0) {
+			this.surplus = this.drugs;  
+			if (this.surplus > Settings.DealersParams.SurplusLimit) {
+				shouldDropOut = true;
+			}
+			else{
 				/* This dealer did not drop-out. So re-supply drug. */
-				this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));		
+				this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));
 			}
 		}
 
@@ -470,7 +461,9 @@ public class Dealer extends Person {
 	public boolean canSellDrugs() {
 		if (this.drugs < unitsToSell) { 
 			if	(Settings.Resupply.getSupplyOptionForDealer().equals(Settings.SupplyOption.Automatic)){
-				supplyAutomatic();
+				if (this.drugs < unitsToSell ) {
+					this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
+				}
 				return true;
 			}
 			else{
@@ -490,7 +483,7 @@ public class Dealer extends Person {
 			}
 			return false;
 		}
-		
+
 		deductDrug(transaction.getDrugQtyInUnits());
 		addMoney(Settings.PricePerGram);
 		lastDayTransactions.add(transaction);
@@ -504,13 +497,6 @@ public class Dealer extends Person {
 			System.out.println("Dealer "+this.personID+ " sell drug add Transaction time: " + transaction.getTime() + "Transaction day: " + day );
 		}
 		return true;
-	}
-
-	/** Supply drug automatically. */
-	private void supplyAutomatic() {
-		if (this.drugs < unitsToSell ) {
-			this.addDrug(Settings.Resupply.resupplyDrugs(this.drugs));	
-		}
 	}
 
 	public double getSalesYesterday() {
@@ -621,13 +607,13 @@ public class Dealer extends Person {
 
 		int num_sales[] = new int[totalDays];
 		double sales_units[]=  new double[totalDays];
-		
+
 		/* Initialize arrays*/
 		for(int i=0; i<totalDays; i++){
 			num_sales[i] = 0;
 			sales_units[i] = 0.0;
 		}
-		
+
 		/* Now calculate summaries */
 		while (itr.hasNext()) {
 			TransactionEdge edge = (TransactionEdge) itr.next();
@@ -643,14 +629,14 @@ public class Dealer extends Person {
 				}
 			}
 		}
-		
+
 		for (int i=0; i<totalDays; i++) {
 			sumSqNumSales += num_sales[i] * num_sales[i];
 			sumSqUnits +=  sales_units[i] * sales_units[i]; // * ( num_sales[i] * sales_units[i] );
-			
+
 			strSales += (num_sales[i] + " , ");
 			strSalesUnits += (sales_units[i] + " , ");
-			
+
 			summary.n++;
 
 			double delta = num_sales[i] - summary.meanNumSalesProgressive;

@@ -26,7 +26,7 @@ public class DealerStyle3D extends DefaultStyle3D<Person>{
 			//		      AppearanceFactory.setMaterialAppearance(taggedAppearance.getAppearance(),t.getColor());
 		}
 		if(t instanceof Dealer){
-			DealerType type = (DealerType)((Dealer) t).getType();
+			DealerType type = (DealerType)((Dealer) t).getDealerType();
 			if(type == DealerType.Old)
 				AppearanceFactory.setMaterialAppearance(taggedAppearance.getAppearance(),Color.YELLOW);
 			else if(type == DealerType.Greedy)

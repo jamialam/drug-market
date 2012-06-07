@@ -1,0 +1,22 @@
+<repast.simphony.chart.engine.DefaultHistogramChartOutputterDescriptor>
+  <name>A Histogram</name>
+  <outputterFactory class="repast.simphony.chart.wizard.HistogramFactory"/>
+  <dataSetHandler>
+    <dataSets>
+      <string>NumDealersPerCustomer</string>
+      <string>NumOfDealer</string>
+    </dataSets>
+  </dataSetHandler>
+  <streamHandler>
+    <columns/>
+  </streamHandler>
+  <isBatchAction>false</isBatchAction>
+  <dataSetId class="string">NumDealersPerCustomer</dataSetId>
+  <showLegend>false</showLegend>
+  <multipleSeries>false</multipleSeries>
+  <valueColumnName>MyNumofDealer</valueColumnName>
+  <numberOfBins>11</numberOfBins>
+  <min>0.0</min>
+  <max>11.0</max>
+  <outOfRangeHandling>IGNORE</outOfRangeHandling>
+</repast.simphony.chart.engine.DefaultHistogramChartOutputterDescriptor>

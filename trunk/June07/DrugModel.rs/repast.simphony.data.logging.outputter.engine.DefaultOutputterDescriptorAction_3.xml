@@ -1,0 +1,42 @@
+<repast.simphony.data.logging.outputter.engine.DefaultFileOutputterDescriptor>
+  <name>DealsToday</name>
+  <outputterFactory class="repast.simphony.data.logging.outputter.engine.DefaultFileOutputterDescriptor$1">
+    <outer-class reference="../.."/>
+  </outputterFactory>
+  <dataSetHandler>
+    <dataSets>
+      <string>SalesAndDealsToday</string>
+    </dataSets>
+  </dataSetHandler>
+  <streamHandler>
+    <columns>
+      <string>Tick</string>
+      <string>Mean Sales</string>
+      <string>Kurtosis Deals</string>
+      <string>Mean Deals</string>
+      <string>Min Sales</string>
+      <string>Max Deals</string>
+      <string>Skewness Deals</string>
+      <string>Min Deals</string>
+      <string>Kurtosis Sales</string>
+      <string>Std Deviation Sales</string>
+      <string>Std Deviation Deals</string>
+      <string>Skewness Sales</string>
+      <string>Max Sales</string>
+    </columns>
+  </streamHandler>
+  <isBatchAction>false</isBatchAction>
+  <dataSetId class="string">SalesAndDealsToday</dataSetId>
+  <fileName>data/DealsToday.csv</fileName>
+  <insertTimeToFileName>true</insertTimeToFileName>
+  <insertBatchToFileName>true</insertBatchToFileName>
+  <insertRunToFileName>true</insertRunToFileName>
+  <appendToFile>false</appendToFile>
+  <writeHeader>true</writeHeader>
+  <formatType class="repast.simphony.data.logging.outputter.LMDelimitedFormatter">
+    <streamHandler>
+      <columns/>
+    </streamHandler>
+  </formatType>
+  <delimiter>,</delimiter>
+</repast.simphony.data.logging.outputter.engine.DefaultFileOutputterDescriptor>

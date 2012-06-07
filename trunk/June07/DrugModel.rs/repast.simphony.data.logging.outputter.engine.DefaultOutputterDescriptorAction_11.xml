@@ -1,0 +1,35 @@
+<repast.simphony.data.logging.outputter.engine.DefaultFileOutputterDescriptor>
+  <name>Total Money Tax and Units</name>
+  <outputterFactory class="repast.simphony.data.logging.outputter.engine.DefaultFileOutputterDescriptor$1">
+    <outer-class reference="../.."/>
+  </outputterFactory>
+  <dataSetHandler>
+    <dataSets>
+      <string>Customer Money Tax and Units </string>
+    </dataSets>
+  </dataSetHandler>
+  <streamHandler>
+    <columns>
+      <string>Tick</string>
+      <string>Sum of Total Tax Collected</string>
+      <string>Sum of Total Units Purchased</string>
+      <string>Sum of Price Paid per 12 gram</string>
+      <string>Sum of Total Money Spend</string>
+      <string>Sum of Total Tax Paid</string>
+    </columns>
+  </streamHandler>
+  <isBatchAction>false</isBatchAction>
+  <dataSetId class="string">Customer Money Tax and Units </dataSetId>
+  <fileName>data/Total Money Tax and Units.csv</fileName>
+  <insertTimeToFileName>true</insertTimeToFileName>
+  <insertBatchToFileName>true</insertBatchToFileName>
+  <insertRunToFileName>true</insertRunToFileName>
+  <appendToFile>false</appendToFile>
+  <writeHeader>true</writeHeader>
+  <formatType class="repast.simphony.data.logging.outputter.LMDelimitedFormatter">
+    <streamHandler>
+      <columns/>
+    </streamHandler>
+  </formatType>
+  <delimiter>,</delimiter>
+</repast.simphony.data.logging.outputter.engine.DefaultFileOutputterDescriptor>

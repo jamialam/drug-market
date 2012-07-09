@@ -17,13 +17,12 @@ public class DropOutCollector {
 		this.NoCustomerDropOutsToday = 0;
 	}
 
-	/*@Watch( watcheeClassName = "individual.Dealer",
+	@Watch( watcheeClassName = "individual.Dealer",
 			watcheeFieldNames = "resaonOfDropOut",
 			query = "colocated",
 			whenToTrigger = WatcherTriggerSchedule.IMMEDIATE,
 			scheduleTriggerDelta = 1, scheduleTriggerPriority = 1
-			//			triggerCondition = "$watchee.isIssueRaised() == true"
-	)*/
+	)
 	public void recordTransaction(individual.Dealer dealer){
 		DropOutReason reason  = dealer.getResaonOfDropOut();
 		if(reason == DropOutReason.NotDroppingOut){

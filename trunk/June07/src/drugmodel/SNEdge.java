@@ -29,6 +29,10 @@ public class SNEdge<T> extends RepastEdge {
 			endorsement = _endorsement;
 			endorsementTime = _endorsementTime;
 		}
+		public Endorsement getEndorsement() {
+			return endorsement;
+		}
+		
 	}
 
 	/** This is the actual constructor used in the model. */
@@ -71,6 +75,14 @@ public class SNEdge<T> extends RepastEdge {
 	public void addEndorsement(Transaction deal, Endorsement endorsement, double time) {
 		TransactionEndorsement etransaction = new TransactionEndorsement(deal, endorsement, time);
 		endorsedTransactionList.add(etransaction);
+	}
+	public Endorsement getLastEndorsement(){
+		if(endorsedTransactionList.size() == 0){
+			System.err.println("Endorsement list has size zero");
+			return null;
+		}
+		TransactionEndorsement etransaction = endorsedTransactionList.get(endorsedTransactionList.size()-1);
+		return etransaction.getEndorsement();
 	}
 
 	public void addTransaction(Transaction transaction) {

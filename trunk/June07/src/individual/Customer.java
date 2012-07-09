@@ -54,23 +54,41 @@ public class Customer extends Person {
 	/** Stores the data of dropped links. Key: ID of the customer with whom link was dropped. Value: Time when dropped. */
 	protected HashMap<Integer, Double> droppedLinks;
 
+	private double buythroughBroker;
+	private double buythroughBrokerinLastNdays;
+	private double totalBrokerageDone;
+	private double BrokerageinLastNdays;
+	private double TaxPaidinLastNdays;
+	private double MoneySpendinLastNdays;
+	private double TaxCollectedinLastNdays;
+	private double UnitsPurchasedinLastNdays;
+	private double DrugConsumedinLastNdays;
+	
 	// for charts and display
 	private double totalTaxPaid;
 	private double totalMoneySpend;
 	private double totalTaxCollected;
 	private double totalUnitsPurchased;
+	private double totalDrugConsumed;
 /** Number of current social network links that this customer has. Used for display*/
 	private int curLinks ;
 	private double TaxPaidToday;
 	private double MoneySpendToday;
 	private double TaxCollectedToday;
 	private double UnitsPurchasedToday;
-	private double curTaxCollected;
+//	private double cuxrTaxCollected;
 	private int couldnotBuyDrugToday;
+	private double DrugConsumedToday;
 
+	private double CurTaxAccount;
+	private double MoneySpentfromNormalAccountinLastNdays;
+	private double ActualPricePaidPer12UnitsinLastNdays;
+	
+	
+	
 	public Customer(Context _context) {
 		this.context = _context;
-		this.initKnownDealers = Settings.CustomerParams.returnInitKnownDealers();
+		this.initKnownDealers = Settings.CustomerParams.returnInitKnownDealersFromExp();
 		this.initialBudget = Settings.CustomerParams.returnInitialBudget();
 		addMoney(initialBudget);
 		if (Settings.Tax.taxType.equals(TaxType.FlatFee)) {
@@ -91,17 +109,32 @@ public class Customer extends Person {
 		this.maxLinks = 0;
 		this.curLinks = 0; 
 		droppedLinks = new HashMap<Integer, Double>();
+		this.couldnotBuyDrugToday = 0;
+		this.buythroughBroker = 0.0;
+		this.totalBrokerageDone = 0.0;
 		this.totalTaxPaid = 0.0;
 		this.totalMoneySpend = 0.0;
 		this.totalTaxCollected = 0.0;
 		this.totalUnitsPurchased = 0.0;
+		this.totalDrugConsumed =0.0;
+
 		this.TaxPaidToday = 0.0;
 		this.MoneySpendToday = 0.0;
 		this.TaxCollectedToday = 0.0;
 		this.UnitsPurchasedToday = 0.0;
-		this.curTaxCollected = 0.0;
-		this.couldnotBuyDrugToday = 0;
+		this.DrugConsumedToday = 0.0;
+		
+		this.MoneySpendinLastNdays = 0.0;
+		this.TaxCollectedinLastNdays = 0.0;
+		this.TaxPaidinLastNdays = 0.0;
+		this.UnitsPurchasedinLastNdays = 0.0;
+		this.DrugConsumedinLastNdays = 0.0;
+		this.BrokerageinLastNdays = 0.0;
+		this.buythroughBrokerinLastNdays =0.0;
 	
+		this.CurTaxAccount = 0.0;
+		this.MoneySpentfromNormalAccountinLastNdays = 0.0;
+		this.ActualPricePaidPer12UnitsinLastNdays = 0.0;
 	}
 
 	/** This method is called once. Priority is set to 10 so that it's called earliest at the start, after the social network
@@ -112,6 +145,32 @@ public class Customer extends Person {
 		maxLinks = socialNetwork.getInDegree(this);
 		curLinks = maxLinks;		
 	}
+	@ScheduledMethod(start = Settings.CustNonAggDataInterval, interval = Settings.CustNonAggDataInterval, priority = 3)
+	public void calc(){
+		if( (this.MoneySpendinLastNdays + this.TaxPaidinLastNdays) > (this.CurTaxAccount + this.TaxCollectedinLastNdays) ) {
+			this.MoneySpentfromNormalAccountinLastNdays = this.MoneySpendinLastNdays + this.TaxPaidinLastNdays - (this.CurTaxAccount + this.TaxCollectedinLastNdays);
+			this.ActualPricePaidPer12UnitsinLastNdays = (this.MoneySpentfromNormalAccountinLastNdays / this.UnitsPurchasedinLastNdays ) * Settings.UnitsPerGram;	
+		}
+		else{
+			this.MoneySpentfromNormalAccountinLastNdays = 0.0;
+			this.CurTaxAccount =  (this.CurTaxAccount + this.TaxCollectedinLastNdays) - (this.MoneySpendinLastNdays + this.TaxPaidinLastNdays );
+			this.ActualPricePaidPer12UnitsinLastNdays = 0.0;	
+		}
+			
+	}
+
+	
+	@ScheduledMethod(start = Settings.CustNonAggDataInterval, interval = Settings.CustNonAggDataInterval, priority = 1)
+	public void resetNDaysVar(){
+		this.TaxPaidinLastNdays = 0.0;
+		this.MoneySpendinLastNdays = 0.0;
+		this.TaxCollectedinLastNdays = 0.0;
+		this.UnitsPurchasedinLastNdays = 0.0;
+		this.DrugConsumedinLastNdays = 0.0;
+		this.BrokerageinLastNdays = 0.0;
+		this.buythroughBrokerinLastNdays =0.0;
+	}
+
 	@ScheduledMethod(start = Settings.StepsInDay, interval = Settings.StepsInDay, priority = 1)
 	public void resetTaxVar(){
 		this.TaxPaidToday = 0.0;
@@ -119,6 +178,7 @@ public class Customer extends Person {
 		this.TaxCollectedToday = 0.0;
 		this.UnitsPurchasedToday = 0.0;
 		this.couldnotBuyDrugToday = 0;
+		this.DrugConsumedToday = 0.0;
 	}
 	/** Agents have unlimited resources to buy drugs and the model only keeps track of how much they spend and use (in units).
 	 * 	Currently, the income interval is Homogeneous. */
@@ -139,6 +199,9 @@ public class Customer extends Person {
 	public void consumeDrugs() {	
 		if (this.drugs >= Settings.consumptionUnitsPerStep) {
 			deductDrug(Settings.consumptionUnitsPerStep);
+			this.DrugConsumedToday += Settings.consumptionUnitsPerStep;
+			this.totalDrugConsumed += Settings.consumptionUnitsPerStep;
+			this.DrugConsumedinLastNdays += Settings.consumptionUnitsPerStep;
 		}
 		// The amount of current drugs is less than consumptionUnitsPerSteps, so try to buy drugs. 
 		else {
@@ -151,7 +214,12 @@ public class Customer extends Person {
 				this.couldnotBuyDrugToday  = 1;
 			}	
 			else{
+				deductDrug(Settings.consumptionUnitsPerStep);
+				this.DrugConsumedToday += Settings.consumptionUnitsPerStep;
+				this.totalDrugConsumed += Settings.consumptionUnitsPerStep;
+				this.DrugConsumedinLastNdays += Settings.consumptionUnitsPerStep;
 				this.couldnotBuyDrugToday  = 0;
+			
 			}
 		}
 	}
@@ -380,7 +448,7 @@ public class Customer extends Person {
 //		else if(this.personID !=  deal.getCustomerID() ){
 		else if(myDeal == false ){
 			/** customer endorsing the broker on the basis of his menu of deals excluding tax.*/
-			Endorsement endorseBrokerbyCustomer = calcSharedDealEndorsement(unitsPurchased, deal.getCustomerID() );
+			Endorsement brokerEndorsementbyCustomer = calcSharedDealEndorsement(unitsPurchased, deal.getCustomerID() );
 			
 			Customer broker = (Customer) returnMyConnection(deal.getCustomerID(), Settings.socialnetwork);
 			/** broker endorsing the dealer on the basis of his last deal with that dealer.*/
@@ -398,7 +466,7 @@ public class Customer extends Person {
 			dealer.sellDrug(transaction);
 			/* Actual buying from the dealer happens here.*/
 			buyDrug(transaction);
-			this.lastTransaction = transaction;		
+			//this.lastTransaction = transaction;		
 			System.out.println("In buyDrugsandEndorseDeals this.id != deal.getcustomerID. linked :" + transactionNetwork.evaluate(new Linked(dealer, this))  );
 
 			/* Now add record this transaction on connection-dealer edge, pay tax or commission  and endorse the acquaintance */
@@ -408,7 +476,7 @@ public class Customer extends Person {
 				payTax(broker, unitsPurchased,transaction.getTransactionID());
 				/* If I am using someone else's shared deal. This endorse occurs even in the case when the dealer did not
 				 * sell the drug and I went to the dealer. Does not happen in the Automatic Drug Supply mode. */
-				updateEndorsement(transaction, deal.getCustomerID(), endorseBrokerbyCustomer);
+				endorseBrokerbyCustomer(transaction, deal.getCustomerID(), brokerEndorsementbyCustomer);
 				
 				// add this transaction on connection-dealer edge 
 				if(transactionNetwork.evaluate(new Linked(dealer, broker)) == true) {
@@ -430,7 +498,7 @@ public class Customer extends Person {
 						int numDealers  = transactionNetwork.getDegree(this);
 						outEdge.resetNumTimesTaxPaid();
 						if (transactionNetwork.evaluate(new Linked(dealer, this)) == false 
-								&& ( endorseBrokerbyCustomer == Endorsement.Good //it implies that this deal is better than my worst deal  
+								&& ( brokerEndorsementbyCustomer == Endorsement.Good //it implies that this deal is better than my worst deal  
 										|| numDealers < Settings.MaxDealerCustomerlinks ) ) {
 							Transaction transaction1 = new Transaction(dealer, this.getPersonID(), 
 									(int) -1 ,costPerUnit, unitsPurchased, 
@@ -456,10 +524,12 @@ public class Customer extends Person {
 					}
 			
 				}		
+			
 			}
 			else {
 				System.err.println("Connection is null. Person to pay tax, not found.");
 			}
+			this.lastTransaction = transaction;		
 			
 		}
 		/* Share a good deal if the share deal mode is Pro-active. */
@@ -577,16 +647,20 @@ public class Customer extends Person {
 	
 	
 	/** Update @param endorsement for a @param transaction based on the deal that was shared by the customer @param connectionID */
-	private void updateEndorsement(Transaction transaction, int connectionID, Endorsement endorsement) {
+	private void endorseBrokerbyCustomer(Transaction transaction, int connectionID, Endorsement endorsement) {
 		boolean updated = false;
 		Network socialNetwork = (Network)(context.getProjection(Settings.socialnetwork));
 		Iterator itr = socialNetwork.getAdjacent(this).iterator();
 		while (itr.hasNext()) {
-			Customer customer = (Customer) itr.next();
-			if (customer.getPersonID() == connectionID) {
-				SNEdge outEdge = (SNEdge) socialNetwork.getEdge(this, customer);	
+			Customer connection = (Customer) itr.next();
+			if (connection.getPersonID() == connectionID) {
+				SNEdge outEdge = (SNEdge) socialNetwork.getEdge(this, connection);	
 				double currentTick = ContextCreator.getTickCount();
 				outEdge.addEndorsement(transaction, endorsement, currentTick);
+				//increase count for the person doing brokerage
+				connection.incBrokerage();
+				//increase count for this person buying through a broker 
+				this.incBuyThroughBroker();
 	//			System.out.println("ME: " + personID + " endorsing my connection on this on my transaction: "  + transaction.getTransactionID()  +  " endorsement: " + endorsement + " based on deal ID: "+ transaction.getDealUsed());
 
 				updated = true;
@@ -611,8 +685,10 @@ public class Customer extends Person {
 		deductMoney(Settings.PricePerGram);
 		this.totalMoneySpend += Settings.PricePerGram;
 		this.MoneySpendToday += Settings.PricePerGram;
+		this.MoneySpendinLastNdays += Settings.PricePerGram;
 		this.totalUnitsPurchased += transaction.getDrugQtyInUnits();
 		this.UnitsPurchasedToday += transaction.getDrugQtyInUnits();
+		this.UnitsPurchasedinLastNdays += transaction.getDrugQtyInUnits();
 		System.out.println("ME: " + this.personID  + " buying drug...transaction ID: " + transaction.getTransactionID()+ "  paying: 120..... getting Drug in Units: "+ transaction.getDrugQtyInUnits());
 }
 /*	private void buyDrugNew(Transaction transaction) {
@@ -683,6 +759,7 @@ public class Customer extends Person {
 			connection.addTaxCollected(taxAmount);
 			totalTaxPaid += taxAmount;
 			this.TaxPaidToday += taxAmount;
+			this.TaxPaidinLastNdays += taxAmount;
 			System.out.println("ME: " + this.personID  + " buying drug...transaction ID: " + transaction_id+ "  paying tax: " + taxAmount +  " to customer ID: " + connection.getPersonID());
 		}
 		else {
@@ -700,7 +777,8 @@ public class Customer extends Person {
 		// TODO Auto-generated method stub
 		this.totalTaxCollected += taxAmount;
 		this.TaxCollectedToday += taxAmount;
-		this.curTaxCollected +=taxAmount;
+		this.TaxCollectedinLastNdays += taxAmount;
+//		this.curTaxCollected +=taxAmount;
 	}
 
 	/** Called for Pro-active mode only. Shared deal based on either sharing per deal OR sharing per connection. */
@@ -769,29 +847,30 @@ public class Customer extends Person {
 	 */
 	protected Transaction returnDealFromNetwork(){
 		Network socialNetwork = (Network) (context.getProjection(Settings.socialnetwork));
-		ArrayList<SNEdge> preferenceOutEdgeList = returnMyCustomerPreferenceList();
+		ArrayList<SNEdge> preferenceOutEdgeList = returnMyBrokerPreferenceList();
 
 		if(Settings.CustomerParams.shareDealMode == ShareDealMode.OnDemand){
 //			System.out.println("Me: " + personID + "returnDealfromNetwork:  preference list size: " + preferenceOutEdgeList.size() );
 
 			for (SNEdge edge : preferenceOutEdgeList) {
-				Customer customer = (Customer) edge.getTarget();
+				Customer broker = (Customer) edge.getTarget();
 				//				System.out.println("ME: "+ personID+ " customer.getLastTransaction().getEndorsement().equals(Endorsement.Good) " + customer.getLastTransaction().getEndorsement().equals(Endorsement.Good));
-				if (Math.random() <= customer.getShareDealProb()
-						&& customer.getLastTransaction() != null
-						&& customer.getLastTransaction().getEndorsement().equals(Endorsement.Good)
-						&& customer.getLastTransaction().getTransactionType().equals(TransactionType.directDeal)){ 
-
-					SNEdge InEdge = (SNEdge) socialNetwork.getEdge(customer, this);
+				if (Math.random() <= broker.getShareDealProb()
+						&& broker.getLastTransaction() != null
+						&& broker.getLastTransaction().getEndorsement().equals(Endorsement.Good)
+						//IMPORTANT ... LAST TRANS MUST BE OWN DEAL (ARB. ASSUMPTION)
+						&& broker.getLastTransaction().getTransactionType().equals(TransactionType.directDeal)){ 
+					
+					SNEdge InEdge = (SNEdge) socialNetwork.getEdge(broker, this);
 
 					if(InEdge == null){
-						System.err.println("Edge null.: " + socialNetwork.isAdjacent(customer, this));
+						System.err.println("Edge null.: " + socialNetwork.isAdjacent(broker, this));
 						if(!ContextCreator.verifyNetwork()) {
 							System.err.println("Network verification failed");
 						}
 					}
 					else {
-						Transaction deal = customer.getLastTransaction();
+						Transaction deal = broker.getLastTransaction();
 						InEdge.addTransaction(deal);
 						Dealer dealer = deal.getDealer();
 						if( context.contains(dealer) == false){
@@ -799,19 +878,21 @@ public class Customer extends Person {
 							//to put with the DealerNotFoundBad endorsement.
 							Transaction transaction = new Transaction(dealer, this.personID, ContextCreator.getTickCount(), 
 									0, 0, Endorsement.DealerNotFoundBad, deal.getTransactionID(), deal.getCustomerID(), TransactionType.Broker);
-							updateEndorsement(transaction, deal.getCustomerID(), Endorsement.DealerNotFoundBad);
+							endorseBrokerbyCustomer(transaction, broker.getPersonID(), Endorsement.DealerNotFoundBad);
 							this.lastTransaction = transaction;		
+							
 							//							updateEndorsement(deal, deal.getCustomerID(), Endorsement.DealerNotFoundBad);
 							System.out.println("network share deal. dealer not found. " );
 						}
 						else if(dealer.canSellDrugs() == false ){
 							Transaction transaction = new Transaction(dealer, this.personID, ContextCreator.getTickCount(), 
 									0, 0, Endorsement.UnSoldBad, deal.getTransactionID(), deal.getCustomerID(),TransactionType.Broker);
-							updateEndorsement(transaction, deal.getCustomerID(), Endorsement.UnSoldBad);
+							endorseBrokerbyCustomer(transaction, broker.getPersonID(), Endorsement.UnSoldBad);
 							this.lastTransaction = transaction;		
 
 // IMPORTANT: 							
 //TODO : add this transaction of the broker-dealer network edge......
+							
 							
 //							updateEndorsement(deal, deal.getCustomerID(), Endorsement.UnSoldBad);
 							System.out.println("network share deal. dealer cant sell. " );
@@ -840,14 +921,14 @@ public class Customer extends Person {
 					if( context.contains(dealer) == false){
 						Transaction transaction = new Transaction(dealer, this.personID, ContextCreator.getTickCount(), 
 								0, 0, Endorsement.DealerNotFoundBad, deal.getTransactionID(), deal.getCustomerID(),TransactionType.Broker);
-						updateEndorsement(transaction, deal.getCustomerID(), Endorsement.DealerNotFoundBad);
+						endorseBrokerbyCustomer(transaction, deal.getCustomerID(), Endorsement.DealerNotFoundBad);
 //						updateEndorsement(deal, deal.getCustomerID(), Endorsement.DealerNotFoundBad);
 					}
 					else if(dealer.canSellDrugs() == false ){
 						Transaction transaction = new Transaction(dealer, this.personID, ContextCreator.getTickCount(), 
 								0, 0, Endorsement.UnSoldBad, deal.getTransactionID(), deal.getCustomerID(), TransactionType.Broker);
 					
-						updateEndorsement(transaction, deal.getCustomerID(), Endorsement.UnSoldBad);
+						endorseBrokerbyCustomer(transaction, deal.getCustomerID(), Endorsement.UnSoldBad);
 						//updateEndorsement(deal, deal.getCustomerID(), Endorsement.UnSoldBad);
 					}
 					else {
@@ -863,7 +944,7 @@ public class Customer extends Person {
 		}
 	}
 	
-	protected ArrayList<SNEdge> returnMyCustomerPreferenceList(){
+	protected ArrayList<SNEdge> returnMyBrokerPreferenceList(){
 		Network socialNetwork = (Network) (context.getProjection(Settings.socialnetwork));
 		Iterator itr = socialNetwork.getOutEdges(this).iterator();
 		ArrayList<SNEdge> preferenceList = new ArrayList<SNEdge>();
@@ -1049,8 +1130,16 @@ public class Customer extends Person {
 		}
 		return connection; 
 	}
+	
+	public void incBrokerage(){
+		++this.BrokerageinLastNdays;
+		++this.totalBrokerageDone;
+	}
 
-
+	public void incBuyThroughBroker(){
+		++this.buythroughBroker;
+		++this.buythroughBrokerinLastNdays;
+	}
 	public int getInitKnownDealers() {
 		return initKnownDealers;
 	}
@@ -1102,32 +1191,38 @@ public class Customer extends Person {
 	public double getTotalUnitsPurchased() {
 		return totalUnitsPurchased;
 	}
-	public double getActualPricePaidPerGram(){
+	public double getTotalDrugConsumed(){
+		return this.totalDrugConsumed;
+	}
+	
+	public double getTotalPricePaidPer12UnitsWithoutTax(){
 		if(totalUnitsPurchased == 0.0){
 			return 0.0;
 		}
-		return ( ((this.totalMoneySpend + this.totalTaxPaid - this.totalTaxCollected) / this.totalUnitsPurchased ) * Settings.UnitsPerGram ); 
-//		return ( ((this.totalMoneySpend + this.totalTaxPaid) / this.totalUnitsPurchased ) * Settings.UnitsPerGram ); 
+		return ( ((this.totalMoneySpend ) / this.totalUnitsPurchased ) * Settings.UnitsPerGram ); 
 
 	}
-	public double getTodayActualPricePaidPerGram(){
+	public double getTotalPricePaidPer12UnitWithTax(){
 		if(this.UnitsPurchasedToday == 0.0){
 			return 0.0;
 		}
-		//double tax = this.curTaxCollected;
-		//curTaxCollected =0.0;
-		return ( ((this.MoneySpendToday ) / this.UnitsPurchasedToday ) ); 
-		//return ( ((this.MoneySpendToday ) / this.UnitsPurchasedToday ) * Settings.UnitsPerGram ); 
-		//		return ( ((this.totalMoneySpend + this.totalTaxPaid) / this.totalUnitsPurchased ) * Settings.UnitsPerGram ); 
+			return ( ((this.totalMoneySpend + this.totalTaxPaid - this.totalTaxCollected) / this.totalUnitsPurchased ) * Settings.UnitsPerGram );
 
 	}
-//	@ScheduledMethod(start = Settings.StepsInDay, interval = Settings.StepsInDay, priority = 3)
+	/*public double getTodayActualPricePaidPer12Unit(){
+		if(this.UnitsPurchasedToday == 0.0){
+			return 0.0;
+		}
+		return ( ((this.MoneySpendToday + this.TaxPaidToday - this.TaxCollectedToday ) / this.UnitsPurchasedToday ) * Settings.UnitsPerGram ); 
+
+	}
+*/
+	//	@ScheduledMethod(start = Settings.StepsInDay, interval = Settings.StepsInDay, priority = 3)
 	public void print(){
 		
 		System.out.println("PRINTTICK: " + ContextCreator.getTickCount() +" " + personID + "  " +  this.TaxPaidToday +" " 
 				+	this.MoneySpendToday+
-				"  " +  this.TaxCollectedToday + " " + 	this.UnitsPurchasedToday + " "
-				+  this.getTodayActualPricePaidPerGram());
+				"  " +  this.TaxCollectedToday );
 	}
 
 	public double getTaxPaidToday() {
@@ -1183,5 +1278,57 @@ public class Customer extends Person {
 	public int getCouldnotBuyDrugToday() {
 		return couldnotBuyDrugToday;
 	}
+	public double getDrugConsumedToday(){
+		return this.DrugConsumedToday;
+	}
 
+	public double getTaxPaidinLastNdays() {
+		return TaxPaidinLastNdays;
+	}
+
+	public double getMoneySpendinLastNdays() {
+		return MoneySpendinLastNdays;
+	}
+
+	public double getTaxCollectedinLastNdays() {
+		return TaxCollectedinLastNdays;
+	}
+
+	public double getUnitsPurchasedinLastNdays() {
+		return UnitsPurchasedinLastNdays;
+	}
+
+	public double getDrugConsumedinLastNdays() {
+		return DrugConsumedinLastNdays;
+	}
+
+	public double getTotalBrokerageDone() {
+		return totalBrokerageDone;
+	}
+
+	public double getBrokerageinLastNdays() {
+		return BrokerageinLastNdays;
+	}
+
+	public double getBuythroughBroker() {
+		return buythroughBroker;
+	}
+
+	public double getBuythroughBrokerinLastNdays() {
+		return buythroughBrokerinLastNdays;
+	}
+
+	public double getCurTaxAccount() {
+		return CurTaxAccount;
+	}
+
+	public double getMoneySpentfromNormalAccountinLastNdays() {
+		return MoneySpentfromNormalAccountinLastNdays;
+	}
+
+	public double getActualPricePaidPer12UnitsinLastNdays() {
+		return ActualPricePaidPer12UnitsinLastNdays;
+	}
+	
+	
 }

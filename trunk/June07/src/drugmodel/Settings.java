@@ -17,7 +17,7 @@ public class Settings {
 	public static int InitCustomers = 500;
 	public static int InitDealers = 100;
 	public static double endTime = 100000.0;
-
+	
 	/** Minimum number of dealers for a customer agent */
 	public static int MinDealerCustomerlinks = 1;
 	/** Careful-Maximum number of dealers for a customer agent. 
@@ -39,6 +39,9 @@ public class Settings {
 	public static final double UnitsPerGram = 12.0;
 	/** Amount of drugs consumed by a customer per time step in the model. */
 	public static final double consumptionUnitsPerStep = UnitsPerGram/StepsInDay;
+
+	//IMP  change in DataGatherer as well 
+	public static final double CustNonAggDataInterval = StepsInDay * 7 ; //in days
 
 	public static enum SupplyOption {Automatic, RegularConstant, RegularSurplus};
 //	public static enum DealerSelection {Random, MyBest, NetworkBest};
@@ -133,15 +136,15 @@ public class Settings {
 		private static double meanBudget = 200.0;
 		private static double stdDevBudget = 50.0;
 		
-		public static int returnInitKnownDealers() {			
+		public static int returnInitKnownDealersFromUniform() {			
 			return Uniform.staticNextIntFromTo(Settings.MinDealerCustomerlinks, Settings.MaxDealerCustomerlinks);
 		}
 		
-/*		public static int returnInitKnownDealers() {			
+		public static int returnInitKnownDealersFromExp() {			
 			return 	(int)Math.floor( Exponential.staticNextDouble(8.0)*10 )  ;
 
 		}
-*/
+
 		public static int returnBadAllowed() {
 			return DefaultBadAllowed;
 		}

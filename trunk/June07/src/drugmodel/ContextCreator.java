@@ -74,6 +74,7 @@ public class ContextCreator implements ContextBuilder<Object> {
 		System.out.println("surplus limit: " +Settings.DealersParams.surplusLimit);
 		System.out.println("max deals limit: " +Settings.DealersParams.maxDealsLimit);*/
 
+		System.out.println("Test function");
 		/**  We first create customer agents */ 
 		for (int i=0; i<Settings.InitCustomers; i++) {
 			Customer customer = new Customer(context);

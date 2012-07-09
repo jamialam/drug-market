@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<parameters>
+					<parameter name="randomSeed" displayName="Default Random Seed" type="int" 
+						defaultValue="__NULL__"
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
+									
+		/>
+				<parameter name="initdealerpopulation" displayName="initial dealer population" type="java.lang.Integer" 
+						defaultValue="100" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
+									values="40 60 80 100 120 140 160 "
+						
+		/>
+				<parameter name="updatepricemode" displayName="update price mode" type="java.lang.String" 
+						defaultValue="MeanNumSalesFn" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter"
+									values="MeanNumSalesFn MeanSaleUnitsFn "
+						
+		/>
+				<parameter name="maxdeals" displayName="max deals limit per day" type="java.lang.Integer" 
+						defaultValue="10" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
+									values="10 20 25 30 35 40 "
+						
+		/>
+				<parameter name="initcustomerpopulation" displayName="customer population" type="java.lang.Integer" 
+						defaultValue="500" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
+									values="200 300 400 500 600 800 "
+						
+		/>
+				<parameter name="mydealerselectionprob" displayName="my dealer selection prob" type="java.lang.Double" 
+						defaultValue="0.8" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
+									
+		/>
+				<parameter name="surpluslimit" displayName="surplus limit in grams" type="java.lang.Integer" 
+						defaultValue="14" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
+									values="10 12 14 16 18 "
+						
+		/>
+				<parameter name="sharedealprob" displayName="share deal prob" type="java.lang.Double" 
+						defaultValue="0.3" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
+									
+		/>
+				<parameter name="greedynewdealerprob" displayName="greedy new dealer prob" type="java.lang.Double" 
+						defaultValue="0.5" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
+									
+		/>
+		</parameters>
+
+

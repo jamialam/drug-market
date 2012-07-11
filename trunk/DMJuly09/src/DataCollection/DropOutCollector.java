@@ -24,6 +24,7 @@ public class DropOutCollector {
 			scheduleTriggerDelta = 1, scheduleTriggerPriority = 1
 	)
 	public void recordTransaction(individual.Dealer dealer){
+		System.out.println("in dropoutcollector");
 		DropOutReason reason  = dealer.getResaonOfDropOut();
 		if(reason == DropOutReason.NotDroppingOut){
 			return;
@@ -31,7 +32,7 @@ public class DropOutCollector {
 		else if(reason == DropOutReason.PoliceArrest){
 			++PoliceArrestToday;
 		}
-		if(reason == DropOutReason.Surplus){
+		else if(reason == DropOutReason.Surplus){
 			++SurplusDropOutsToday;
 		}
 		else if(reason == DropOutReason.NoCustomer){

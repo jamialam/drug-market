@@ -1,6 +1,0 @@
-<model xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://repast.org/scenario/user_path" name="drugmodel">
-	<classpath>
-		<agents path="../bin" filter="" />
-		<entry path="../lib" />
-	</classpath>
-</model>

@@ -1,4 +1,0 @@
-<context id="drugmodel" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://repast.org/scenario/context">	
-	<projection type="network" id="socialnetwork"></projection>
-	<projection type="network" id="transactionnetwork"></projection>
-</context>

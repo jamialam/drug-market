@@ -1,0 +1,29 @@
+<repast.simphony.data2.engine.FileSinkDescriptor>
+  <name>CustomerNonAggregate</name>
+  <dataSet>CustomerNonAggregate</dataSet>
+  <delimiter>,</delimiter>
+  <format>TABULAR</format>
+  <sourceIds class="linked-hash-set">
+    <string>run</string>
+    <string>tick</string>
+    <string>PersonID</string>
+    <string>OutDegree</string>
+    <string>MyNumofDealer</string>
+    <string>MoneySpendinLastNdays</string>
+    <string>TaxCollectedinLastNdays</string>
+    <string>TaxPaidinLastNdays</string>
+    <string>UnitsPurchasedinLastNdays</string>
+    <string>DrugConsumedinLastNdays</string>
+    <string>BrokerageinLastNdays</string>
+    <string>BuythroughBrokerinLastNdays</string>
+    <string>CumBrokerageDone</string>
+    <string>CumBuythroughBroker</string>
+    <string>CumlPricePaidPer12UnitsWithoutTax</string>
+    <string>CumlPricePaidPer12UnitWithTax</string>
+    <string>MoneySpentfromNormalAccountinLastNdays</string>
+    <string>CurTaxAccount</string>
+    <string>ActualPricePaidPer12UnitsinLastNdays</string>
+  </sourceIds>
+  <fileName>data/CustomerNAg.csv</fileName>
+  <addTimeStamp>false</addTimeStamp>
+</repast.simphony.data2.engine.FileSinkDescriptor>

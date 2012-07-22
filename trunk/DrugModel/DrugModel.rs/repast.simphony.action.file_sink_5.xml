@@ -1,0 +1,36 @@
+<repast.simphony.data2.engine.FileSinkDescriptor>
+  <name>DealerAggregate</name>
+  <dataSet>DealerAggregate</dataSet>
+  <delimiter>,</delimiter>
+  <format>TABULAR</format>
+  <sourceIds class="linked-hash-set">
+    <string>run</string>
+    <string>tick</string>
+    <string>NumDealers</string>
+    <string>MeanDegree</string>
+    <string>MinDegree</string>
+    <string>MaxDegree</string>
+    <string>VarDegree</string>
+    <string>StdDegree</string>
+    <string>MeanUnitsToSell</string>
+    <string>MinUnitsToSell</string>
+    <string>MaxUnitsToSell</string>
+    <string>VarUnitsToSell</string>
+    <string>StdUnitsToSell</string>
+    <string>MeanSalesToday</string>
+    <string>MinSalesToday</string>
+    <string>MaxSalesToday</string>
+    <string>VarSalesToday</string>
+    <string>StdSalesToday</string>
+    <string>MeanDealsToday</string>
+    <string>MinDealsToday</string>
+    <string>MaxDealsToday</string>
+    <string>VarDealsToday</string>
+    <string>StdDealsToday</string>
+    <string>PoliceArrestToday</string>
+    <string>SurplusDropoutToday</string>
+    <string>NoCustomerDropoutToday</string>
+  </sourceIds>
+  <fileName>data/DealerAg.csv</fileName>
+  <addTimeStamp>false</addTimeStamp>
+</repast.simphony.data2.engine.FileSinkDescriptor>

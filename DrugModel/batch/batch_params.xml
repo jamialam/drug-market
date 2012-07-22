@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<sweep runs="1">
+
+	<parameter name="initcustomerpopulation" 	type="constant" constant_type="number"	value= "500"/>
+	<parameter name="initdealerpopulation" 		type="constant" constant_type="number"	value= "100"/>
+	<parameter name="surpluslimit"		 		type="constant" constant_type="number"	value= "14"/>
+	<parameter name="maxdeals" 					type="constant" constant_type="number"	value= "30"/>
+	<parameter name="greedynewdealerprob" 		type="constant" constant_type="number"	value= "0.5"/>
+	<parameter name="updatepricemode" 			type="constant" constant_type="string"  value="MeanNumSalesFn"/>
+
+	<parameter name="mydealerselectionprob" type="list" value_type="double" values="0.25 0.75 ">
+		<parameter name="sharedealprob" 	type="list" value_type="double" values="0.1 0.3 0.7 1.0"/>
+	</parameter>		
+</sweep>

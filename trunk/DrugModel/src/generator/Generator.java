@@ -39,7 +39,7 @@ public class Generator extends Settings {
 		case Unconnected:
 			network = (ContextJungNetwork)NetworkFactoryFinder.createNetworkFactory(null).createNetwork(name, context, directed, new SNEdgeCreator());
 			break;
-		case BarabasiAlbert:
+		case BarabasiAlbert:			
 			network = returnBarabasiAlbertNetwork(context);
 			break;
 		case KleinbergSmallWorld:
@@ -62,15 +62,11 @@ public class Generator extends Settings {
 		return network;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ "rawtypes"})
 	private static Network returnBarabasiAlbertNetwork(Context context) {
-		double propInitialVertices = 0.01;
-		int initVertices = (int)(Settings.InitCustomers*propInitialVertices);
-		ContextJungNetwork acquaintanceNetwork = (ContextJungNetwork)NetworkFactoryFinder.createNetworkFactory(null).createNetwork(name, context, directed, new SNEdgeCreator());
-		BarabasiAlbertGen<Person, SNEdge<Person>> generator 
-			= new BarabasiAlbertGen<Person, SNEdge<Person>>(context, initVertices, new HashSet<Person>(), edgesToAttach, directed);
-		generator.evolveGraph((int)(Settings.InitCustomers-initVertices));
-		acquaintanceNetwork.setGraph(generator.create());
+		int degreeToAttach = 3;
+		BarabasiAlbertGen generator = new BarabasiAlbertGen(name, context, Settings.InitCustomers, degreeToAttach, directed);
+		Network acquaintanceNetwork = generator.createNetwork();
 		return acquaintanceNetwork;
 	}
 

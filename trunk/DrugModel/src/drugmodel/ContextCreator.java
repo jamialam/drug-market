@@ -22,6 +22,7 @@ import DataCollection.DropOutCollector;
 import DataCollection.ModelParams;
 
 import drugmodel.Settings.Endorsement;
+import drugmodel.Settings.GeneratorType;
 import drugmodel.Settings.TransactionType;
 
 import generator.Generator;
@@ -83,7 +84,8 @@ public class ContextCreator implements ContextBuilder<Object> {
 
 		/** First embed all the customer agents in to a network. */ 
 		@SuppressWarnings("unused")
-		Network socialnetwork = Generator.returnNetwork(context, Settings.generator_type);
+//		Network socialnetwork = Generator.returnNetwork(context, Settings.generator_type);
+		Network socialnetwork = Generator.returnNetwork(context, GeneratorType.BarabasiAlbert);
 		
 		/**  Now creating dealer agents */
 		for (int i=0; i<Settings.InitDealers; i++) {

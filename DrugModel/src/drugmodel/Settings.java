@@ -257,7 +257,7 @@ public class Settings {
 			public static double CLUSTERING_COEFFICIENT = 0.4;
 			/** Parameter for the WattsStrogatz Small world network generator. */
 			public static final double REWIRE_PROB = 0.15;
-			/** Parameter for the Barabasi-Albert network Jung generator. */
+			/** Parameter for the Barabasi-Albert network JUNG generator. */
 			public static final int EDGES_TO_ATTACH = 1;
 			public static GeneratorType convert(String genType) {
 				return GeneratorType.valueOf(GeneratorType.class, genType);

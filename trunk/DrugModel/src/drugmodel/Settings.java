@@ -258,7 +258,7 @@ public class Settings {
 			/** Parameter for the WattsStrogatz Small world network generator. */
 			public static final double REWIRE_PROB = 0.15;
 			/** Parameter for the Barabasi-Albert network Jung generator. */
-			public static final int EDGES_TO_ATTACH = 10;
+			public static final int EDGES_TO_ATTACH = 1;
 			public static GeneratorType convert(String genType) {
 				return GeneratorType.valueOf(GeneratorType.class, genType);
 			}

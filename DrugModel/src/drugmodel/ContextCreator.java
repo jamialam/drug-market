@@ -84,9 +84,8 @@ public class ContextCreator implements ContextBuilder<Object> {
 
 		/** First embed all the customer agents in to a network. */ 
 		@SuppressWarnings("unused")
-//		Network socialnetwork = Generator.returnNetwork(context, Settings.generator_type);
-		Network socialnetwork = Generator.returnNetwork(context, GeneratorType.BarabasiAlbert);
-		
+		Network socialnetwork = Generator.returnNetwork(context, Settings.generator_type);
+				
 		/**  Now creating dealer agents */
 		for (int i=0; i<Settings.InitDealers; i++) {
 			Dealer dealer = new Dealer();

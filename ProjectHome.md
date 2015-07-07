@@ -1,0 +1,1 @@
+An agent-based model of a drug market abstracted from Hoffer et al. (2009).
